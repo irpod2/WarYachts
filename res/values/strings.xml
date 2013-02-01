@@ -2,7 +2,9 @@
 <resources>
 
     <string name="app_name">War Yachts</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="find_game_button_text">Find Game</string>
+    <string name="quit_button_text">Quit</string>
+    
     <string name="menu_settings">Settings</string>
 
 </resources>
