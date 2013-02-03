@@ -2,9 +2,13 @@
 <resources>
 
     <string name="app_name">War Yachts</string>
+    <string name="host_game_button_text">Host New Game</string>
     <string name="find_game_button_text">Find Game</string>
+    <string name="preferences_button_text">Preferences</string>
     <string name="quit_button_text">Quit</string>
-    
+    <string name="scan_for_devices">Scan for more Devices</string>
+    <string name="cancel">Cancel</string>
+    <string name="bt_connect">Choose device to connect with</string>
     <string name="menu_settings">Settings</string>
 
 </resources>

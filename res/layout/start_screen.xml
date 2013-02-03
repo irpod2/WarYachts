@@ -8,9 +8,20 @@
         android:id="@+id/war_yachts_banner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginLeft="5dp" />
+        android:layout_marginLeft="5dp"
+        android:contentDescription="War Yachts Banner"
+        android:src="@drawable/banner" />
 
+    <Button
+        android:id="@+id/host_game_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:text="@string/host_game_button_text" />
+    
     <Button
         android:id="@+id/find_game_button"
         android:layout_width="fill_parent"
@@ -20,6 +31,16 @@
         android:layout_marginRight="10dp"
         android:layout_marginTop="10dp"
         android:text="@string/find_game_button_text" />
+    
+    <Button
+        android:id="@+id/preferences_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:text="@string/preferences_button_text" />
         <!-- android:background="@drawable/base_button_image" -->
         
     <Button

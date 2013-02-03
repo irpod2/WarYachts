@@ -11,12 +11,16 @@ import org.andengine.ui.activity.BaseGameActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
+import android.graphics.Typeface;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.ContentFactory;
 
@@ -37,7 +41,13 @@ public class WarYachtsActivity extends BaseGameActivity
 	public static int cameraWidth = CAMERA_WIDTH;
 	public static int cameraHeight = CAMERA_HEIGHT;
 	protected Scene scene;
+	protected ConnectionHandler btHandler;
 	protected View buttonView;
+
+	protected Button hostGameButton;
+	protected Button findGameButton;
+	protected Button preferencesButton;
+	protected Button quitButton;
 
 	Background oceanBG;
 
@@ -51,10 +61,8 @@ public class WarYachtsActivity extends BaseGameActivity
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		buttonView = vi.inflate(R.layout.start_screen, null);
 
-		// Add gesture view to activity
 		addContentView(buttonView,
 				BaseGameActivity.createSurfaceViewLayoutParams());
-		// buttonView.setVisibility(View.GONE);
 	}
 
 	// Warning suppression due to deprecation on finding window size
@@ -96,7 +104,52 @@ public class WarYachtsActivity extends BaseGameActivity
 			throws Exception
 	{
 		ContentFactory.init(this);
+		btHandler = new ConnectionHandler(this);
 		oceanBG = BackgroundFactory.createStartBackground();
+
+		hostGameButton = (Button) findViewById(R.id.host_game_button);
+		findGameButton = (Button) findViewById(R.id.find_game_button);
+		preferencesButton = (Button) findViewById(R.id.preferences_button);
+		quitButton = (Button) findViewById(R.id.quit_game_button);
+
+		runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Typeface buttonTypeface = Typeface.createFromAsset(getAssets(),
+						"fonts/TMDeadhand.ttf");
+				hostGameButton.setTypeface(buttonTypeface);
+				hostGameButton.setTextSize(36.0f);
+				findGameButton.setTypeface(buttonTypeface);
+				findGameButton.setTextSize(36.0f);
+				preferencesButton.setTypeface(buttonTypeface);
+				preferencesButton.setTextSize(36.0f);
+				quitButton.setTypeface(buttonTypeface);
+				quitButton.setTextSize(36.0f);
+			}
+		});
+
+		findGameButton.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				if(!btHandler.isDiscovering())
+					btHandler.requestEnableBluetooth();
+			}
+		});
+
+		quitButton.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				if(btHandler.isDiscovering())
+					btHandler.kill();
+				finish();
+			}
+		});
 
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
 	}
@@ -106,7 +159,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			throws Exception
 	{
 		scene = new Scene();
-		
+
 		pOnCreateSceneCallback.onCreateSceneFinished(scene);
 	}
 
@@ -119,4 +172,25 @@ public class WarYachtsActivity extends BaseGameActivity
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 	}
 
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		switch (requestCode)
+		{
+		case ConnectionHandler.REQUEST_ENABLE_BT:
+			btHandler.onBtEnabled(resultCode);
+			break;
+		default:
+			// We obviously don't know what this is about, maybe someone
+			// above does
+			super.onActivityResult(requestCode, resultCode, data);
+		}
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		// unregisterReceiver(deviceReceiver);
+		super.onDestroy();
+	}
 }
