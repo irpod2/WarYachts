@@ -56,7 +56,7 @@ public class ConnectionHandler
 			}
 			else
 			{
-				findDevices();
+				onBtEnabled(Activity.RESULT_OK);
 			}
 		}
 		else
@@ -74,10 +74,7 @@ public class ConnectionHandler
 	public void onBtEnabled(int resultCode)
 	{
 		if (resultCode == Activity.RESULT_OK)
-		{
-			Toast.makeText(activity,
-					"Successfully enabled bluetooth, searching for devices.",
-					Toast.LENGTH_SHORT).show();
+		{ 
 			findDevices();
 		}
 		else

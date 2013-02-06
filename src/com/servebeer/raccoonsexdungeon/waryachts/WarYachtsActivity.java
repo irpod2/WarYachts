@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.BackgroundFactory;
@@ -32,6 +33,8 @@ public class WarYachtsActivity extends BaseGameActivity
 	// ===========================================================
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
+
+	public final float BUTTON_TEXT_SIZE = 36.0f;
 
 	// ===========================================================
 	// Fields
@@ -103,10 +106,12 @@ public class WarYachtsActivity extends BaseGameActivity
 			OnCreateResourcesCallback pOnCreateResourcesCallback)
 			throws Exception
 	{
+		// CONTENT FACTORY AND BACKGROUND CREATION
 		ContentFactory.init(this);
 		btHandler = new ConnectionHandler(this);
 		oceanBG = BackgroundFactory.createStartBackground();
 
+		// BUTTON CREATION
 		hostGameButton = (Button) findViewById(R.id.host_game_button);
 		findGameButton = (Button) findViewById(R.id.find_game_button);
 		preferencesButton = (Button) findViewById(R.id.preferences_button);
@@ -120,13 +125,13 @@ public class WarYachtsActivity extends BaseGameActivity
 				Typeface buttonTypeface = Typeface.createFromAsset(getAssets(),
 						"fonts/TMDeadhand.ttf");
 				hostGameButton.setTypeface(buttonTypeface);
-				hostGameButton.setTextSize(36.0f);
+				hostGameButton.setTextSize(BUTTON_TEXT_SIZE);
 				findGameButton.setTypeface(buttonTypeface);
-				findGameButton.setTextSize(36.0f);
+				findGameButton.setTextSize(BUTTON_TEXT_SIZE);
 				preferencesButton.setTypeface(buttonTypeface);
-				preferencesButton.setTextSize(36.0f);
+				preferencesButton.setTextSize(BUTTON_TEXT_SIZE);
 				quitButton.setTypeface(buttonTypeface);
-				quitButton.setTextSize(36.0f);
+				quitButton.setTextSize(BUTTON_TEXT_SIZE);
 			}
 		});
 
@@ -135,8 +140,10 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if(!btHandler.isDiscovering())
+				if (!btHandler.isDiscovering())
+				{
 					btHandler.requestEnableBluetooth();
+				}
 			}
 		});
 
@@ -145,8 +152,10 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if(btHandler.isDiscovering())
+				if (btHandler.isDiscovering())
+				{
 					btHandler.kill();
+				}
 				finish();
 			}
 		});
@@ -177,14 +186,30 @@ public class WarYachtsActivity extends BaseGameActivity
 	{
 		switch (requestCode)
 		{
+ 
 		case ConnectionHandler.REQUEST_ENABLE_BT:
+		{
+			Toast.makeText(this,
+					"Successfully enabled bluetooth, searching for devices.",
+					Toast.LENGTH_SHORT).show();
+
 			btHandler.onBtEnabled(resultCode);
 			break;
+		}
 		default:
+		{
 			// We obviously don't know what this is about, maybe someone
 			// above does
+
+			// TAKE ME OUT
+			// HOW TO PRINT TO SCREEN
+			Toast.makeText(getBaseContext(), "UNHANDLED REQUEST CODE",
+					Toast.LENGTH_SHORT).show();
+
 			super.onActivityResult(requestCode, resultCode, data);
-		}
+		} // default
+
+		} // Switch
 	}
 
 	@Override
