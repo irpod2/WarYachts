@@ -10,6 +10,7 @@ import org.andengine.entity.scene.background.Background;
 import org.andengine.ui.activity.BaseGameActivity;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
@@ -19,9 +20,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler.GameType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.BackgroundFactory;
+import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.ContentFactory;
 
 public class WarYachtsActivity extends BaseGameActivity
@@ -41,7 +45,7 @@ public class WarYachtsActivity extends BaseGameActivity
 	public static int cameraWidth = CAMERA_WIDTH;
 	public static int cameraHeight = CAMERA_HEIGHT;
 	protected Scene scene;
-	protected ConnectionHandler btHandler;
+	protected static ConnectionHandler btHandler;
 	protected View buttonView;
 
 	protected Button hostGameButton;
@@ -50,6 +54,16 @@ public class WarYachtsActivity extends BaseGameActivity
 	protected Button quitButton;
 
 	Background oceanBG;
+
+	CallbackVoid connectionEstablishedCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+			Toast.makeText(getBaseContext(), "Yay, we got a connection!",
+					Toast.LENGTH_SHORT).show();
+		}
+	};
 
 	@Override
 	protected void onSetContentView()
@@ -104,7 +118,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			throws Exception
 	{
 		ContentFactory.init(this);
-		btHandler = new ConnectionHandler(this);
+		btHandler = new ConnectionHandler(this, connectionEstablishedCallback);
 		oceanBG = BackgroundFactory.createStartBackground();
 
 		hostGameButton = (Button) findViewById(R.id.host_game_button);
@@ -135,8 +149,11 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if(!btHandler.isDiscovering())
+				if (!btHandler.isDiscovering())
+				{
+					btHandler.setGameType(GameType.CLIENT);
 					btHandler.requestEnableBluetooth();
+				}
 			}
 		});
 
@@ -145,7 +162,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if(btHandler.isDiscovering())
+				if (btHandler.isDiscovering())
 					btHandler.kill();
 				finish();
 			}
@@ -178,13 +195,35 @@ public class WarYachtsActivity extends BaseGameActivity
 		switch (requestCode)
 		{
 		case ConnectionHandler.REQUEST_ENABLE_BT:
-			btHandler.onBtEnabled(resultCode);
+		{
+			if (resultCode == Activity.RESULT_OK)
+			{
+				Toast.makeText(this, "Successfully enabled bluetooth.",
+						Toast.LENGTH_SHORT).show();
+				btHandler.onBtEnabled(resultCode);
+			}
+			else
+			{
+				Toast.makeText(
+						this,
+						"Could not enable bluetooth, War Yachts will now exit.",
+						Toast.LENGTH_LONG).show();
+				.finish();
+			}
 			break;
+		}
 		default:
+		{
 			// We obviously don't know what this is about, maybe someone
 			// above does
 			super.onActivityResult(requestCode, resultCode, data);
 		}
+		}
+	}
+
+	public static ConnectionHandler getConnectionHandler()
+	{
+		return btHandler;
 	}
 
 	@Override

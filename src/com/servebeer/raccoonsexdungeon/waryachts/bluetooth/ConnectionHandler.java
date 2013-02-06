@@ -3,6 +3,7 @@ package com.servebeer.raccoonsexdungeon.waryachts.bluetooth;
 
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 
 import org.andengine.ui.activity.BaseGameActivity;
 
@@ -10,6 +11,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,26 +21,45 @@ import android.content.IntentFilter;
 import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.R;
+import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 
 public class ConnectionHandler
 {
 	public static final int REQUEST_ENABLE_BT = 1;
 
-	protected BaseGameActivity activity;
+	public static final String serviceName = "WarYachtsConnection";
+	public static final UUID uuid = UUID.nameUUIDFromBytes("WarYachts"
+			.getBytes());
+
+	private BaseGameActivity activity;
 	private BluetoothAdapter btAdapter;
 	private BroadcastReceiver deviceReceiver;
+	private BluetoothSocket socket;
+	private CallbackVoid connectionEstablishedCallback;
 	private ArrayList<String> discoveredDevices;
 	private boolean discovering;
+	private GameType gameType;
 
-	public ConnectionHandler(BaseGameActivity bga)
+	public enum GameType
+	{
+		HOST, CLIENT
+	}
+
+	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB)
 	{
 		activity = bga;
+		connectionEstablishedCallback = connectionCB;
 		discovering = false;
 	}
 
 	public boolean isDiscovering()
 	{
 		return discovering;
+	}
+
+	public void setGameType(GameType type)
+	{
+		gameType = type;
 	}
 
 	public void requestEnableBluetooth()
@@ -56,7 +77,7 @@ public class ConnectionHandler
 			}
 			else
 			{
-				findDevices();
+				onBtEnabled(Activity.RESULT_OK);
 			}
 		}
 		else
@@ -73,60 +94,68 @@ public class ConnectionHandler
 	// Called as a response to requestEnableBluetooth()
 	public void onBtEnabled(int resultCode)
 	{
-		if (resultCode == Activity.RESULT_OK)
+		switch (gameType)
 		{
-			Toast.makeText(activity,
-					"Successfully enabled bluetooth, searching for devices.",
-					Toast.LENGTH_SHORT).show();
-			findDevices();
+		case HOST:
+		{
+
+			break;
 		}
-		else
+		case CLIENT:
 		{
-			Toast.makeText(activity,
-					"Could not enable bluetooth, War Yachts will now exit.",
-					Toast.LENGTH_LONG).show();
-			activity.finish();
+			findDevices();
+			break;
+		}
 		}
 	}
 
-	protected void findDevices()
+	public void findDevices()
 	{
 		Set<BluetoothDevice> pairedDevices = btAdapter.getBondedDevices();
 
-		final String[] deviceArray = pairedDevices
-				.toArray(new String[pairedDevices.size()]);
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-		builder.setTitle("Choose an Opponent");
-
-		builder.setItems(deviceArray, new OnClickListener()
+		if (!pairedDevices.isEmpty())
 		{
-			@Override
-			public void onClick(DialogInterface dialog, int which)
+			final String[] deviceArray = pairedDevices
+					.toArray(new String[pairedDevices.size()]);
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+			builder.setTitle("Choose an Opponent");
+
+			builder.setItems(deviceArray, new OnClickListener()
 			{
-				String mac = deviceArray[which].substring(deviceArray[which]
-						.lastIndexOf("\n") + 1);
-				BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
-				connectToDevice(dev);
-			}
-		});
-
-		builder.setPositiveButton(R.string.scan_for_devices,
-				new OnClickListener()
+				@Override
+				public void onClick(DialogInterface dialog, int which)
 				{
-					@Override
-					public void onClick(DialogInterface dialog, int which)
+					String mac = deviceArray[which]
+							.substring(deviceArray[which].lastIndexOf("\n") + 1);
+					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
+					connectToDevice(dev);
+				}
+			});
+
+			builder.setPositiveButton(R.string.scan_for_devices,
+					new OnClickListener()
 					{
-						Toast.makeText(activity,
-								"Scanning for more devices, please wait",
-								Toast.LENGTH_SHORT).show();
-						scan();
-					}
-				});
+						@Override
+						public void onClick(DialogInterface dialog, int which)
+						{
+							Toast.makeText(activity,
+									"Scanning for more devices, please wait",
+									Toast.LENGTH_SHORT).show();
+							scan();
+						}
+					});
 
-		builder.setNegativeButton(R.string.cancel, null);
+			builder.setNegativeButton(R.string.cancel, null);
 
-		builder.show();
+			builder.show();
+		}
+		else
+		{
+			Toast.makeText(activity, "Scanning for devices, please wait",
+					Toast.LENGTH_SHORT).show();
+			scan();
+		}
 	}
 
 	public void scan()
@@ -165,28 +194,37 @@ public class ConnectionHandler
 
 	protected void chooseDevice()
 	{
-		final String[] deviceArray = discoveredDevices
-				.toArray(new String[discoveredDevices.size()]);
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-		builder.setTitle("Choose an Opponent");
-
-		builder.setItems(deviceArray, new OnClickListener()
+		if (!discoveredDevices.isEmpty())
 		{
-			@Override
-			public void onClick(DialogInterface dialog, int which)
+			final String[] deviceArray = discoveredDevices
+					.toArray(new String[discoveredDevices.size()]);
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+			builder.setTitle("Choose an Opponent");
+
+			builder.setItems(deviceArray, new OnClickListener()
 			{
-				String mac = deviceArray[which].substring(deviceArray[which]
-						.lastIndexOf("\n") + 1);
-				BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
-				connectToDevice(dev);
-			}
-		});
+				@Override
+				public void onClick(DialogInterface dialog, int which)
+				{
+					String mac = deviceArray[which]
+							.substring(deviceArray[which].lastIndexOf("\n") + 1);
+					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
+					connectToDevice(dev);
+				}
+			});
 
-		builder.setCancelable(true);
+			builder.setCancelable(true);
 
-		builder.show();
-		discovering = false;
+			builder.show();
+			discovering = false;
+		}
+		else
+		{
+			Toast.makeText(activity, "No devices found in range",
+					Toast.LENGTH_SHORT).show();
+			discovering = false;
+		}
 	}
 
 	protected void connectToDevice(BluetoothDevice dev)
@@ -197,9 +235,15 @@ public class ConnectionHandler
 						+ dev.getAddress(), Toast.LENGTH_SHORT).show();
 	}
 
+	public void handleIncomingConnection(BluetoothSocket sock)
+	{
+		socket = sock;
+		connectionEstablishedCallback.onCallback();
+	}
+
 	public void kill()
 	{
-		if (btAdapter.isDiscovering())
+		if (btAdapter != null && btAdapter.isDiscovering())
 		{
 			btAdapter.cancelDiscovery();
 			activity.unregisterReceiver(deviceReceiver);
