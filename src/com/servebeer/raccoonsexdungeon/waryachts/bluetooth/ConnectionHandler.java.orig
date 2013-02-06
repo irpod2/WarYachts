@@ -48,6 +48,7 @@ public class ConnectionHandler
 	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB)
 	{
 		activity = bga;
+		connectionEstablishedCallback = connectionCB;
 		discovering = false;
 	}
 
@@ -93,12 +94,18 @@ public class ConnectionHandler
 	// Called as a response to requestEnableBluetooth()
 	public void onBtEnabled(int resultCode)
 	{
+<<<<<<< HEAD
 		switch (gameType)
 		{
 		case HOST:
 		{
 
 			break;
+=======
+		if (resultCode == Activity.RESULT_OK)
+		{ 
+			findDevices();
+>>>>>>> cbcb36687d9a094049623df6d72e210cfdf8ca61
 		}
 		case CLIENT:
 		{
@@ -120,8 +127,8 @@ public class ConnectionHandler
 			AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 			builder.setTitle("Choose an Opponent");
 
-		builder.setItems(deviceArray, new OnClickListener()
-		{
+			builder.setItems(deviceArray, new OnClickListener()
+			{
 				@Override
 				public void onClick(DialogInterface dialog, int which)
 				{
