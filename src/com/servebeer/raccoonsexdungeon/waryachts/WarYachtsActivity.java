@@ -208,7 +208,7 @@ public class WarYachtsActivity extends BaseGameActivity
 						this,
 						"Could not enable bluetooth, War Yachts will now exit.",
 						Toast.LENGTH_LONG).show();
-				.finish();
+				finish();
 			}
 			break;
 		}
