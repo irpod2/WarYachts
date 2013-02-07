@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="Things to do" >
+        <CheckBoxPreference
+            android:key="Please check the box"
+            android:summary="A checkbox"
+            android:title="Check this box" />
+
+        <ListPreference
+            android:defaultValue="digiGreen"
+            android:entries="@array/updateInterval"
+            android:entryValues="@array/updateIntervalValues"
+            android:key="listPref"
+            android:summary="This preference allows to select an item in a array"
+            android:title="List Preference" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

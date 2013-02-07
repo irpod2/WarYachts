@@ -16,8 +16,8 @@ public class HostThread extends Thread
 
 	public HostThread()
 	{
-		// Use a temporary object that is later assigned to mmServerSocket,
-		// because mmServerSocket is final
+		// Use a temporary object that is later assigned to serverSocket,
+		// because serverSocket is final
 		BluetoothServerSocket tmp = null;
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		try
@@ -50,7 +50,7 @@ public class HostThread extends Thread
 			{
 				// Do work to manage the connection (in a separate thread)
 				WarYachtsActivity.getConnectionHandler()
-						.handleIncomingConnection(socket);
+						.handleConnection(socket);
 				try
 				{
 					serverSocket.close();

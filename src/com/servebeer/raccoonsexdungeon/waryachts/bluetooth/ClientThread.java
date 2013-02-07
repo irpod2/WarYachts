@@ -59,8 +59,7 @@ public class ClientThread extends Thread
 		}
 
 		// Do work to manage the connection (in a separate thread)
-		WarYachtsActivity.getConnectionHandler().handleIncomingConnection(
-				btSocket);
+		WarYachtsActivity.getConnectionHandler().handleConnection(btSocket);
 	}
 
 	/** Will cancel an in-progress connection, and close the socket */

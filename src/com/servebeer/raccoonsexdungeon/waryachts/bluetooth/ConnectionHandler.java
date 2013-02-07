@@ -39,6 +39,8 @@ public class ConnectionHandler
 	private ArrayList<String> discoveredDevices;
 	private boolean discovering;
 	private GameType gameType;
+	private HostThread hostThread;
+	private ClientThread clientThread;
 
 	public enum GameType
 	{
@@ -97,13 +99,20 @@ public class ConnectionHandler
 		{
 		case HOST:
 		{
-
+			hostThread = new HostThread();
+			hostThread.run();
 			break;
 		}
 		case CLIENT:
 		{
 			findDevices();
 			break;
+		}
+		default:
+		{
+			Toast.makeText(activity, "No game type specified, exiting",
+					Toast.LENGTH_SHORT).show();
+			activity.finish();
 		}
 		}
 	}
@@ -120,8 +129,8 @@ public class ConnectionHandler
 			AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 			builder.setTitle("Choose an Opponent");
 
-		builder.setItems(deviceArray, new OnClickListener()
-		{
+			builder.setItems(deviceArray, new OnClickListener()
+			{
 				@Override
 				public void onClick(DialogInterface dialog, int which)
 				{
@@ -213,6 +222,8 @@ public class ConnectionHandler
 				}
 			});
 
+			builder.setNegativeButton(R.string.cancel, null);
+
 			builder.setCancelable(true);
 
 			builder.show();
@@ -232,9 +243,11 @@ public class ConnectionHandler
 				activity,
 				"Connecting to device " + dev.getName() + " at MAC addr "
 						+ dev.getAddress(), Toast.LENGTH_SHORT).show();
+		clientThread = new ClientThread(dev);
+		clientThread.run();
 	}
 
-	public void handleIncomingConnection(BluetoothSocket sock)
+	public void handleConnection(BluetoothSocket sock)
 	{
 		socket = sock;
 		connectionEstablishedCallback.onCallback();

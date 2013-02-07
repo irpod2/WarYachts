@@ -26,6 +26,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <activity
+            android:name="com.servebeer.raccoonsexdungeon.waryachts.PreferencesActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
+            android:label="@string/preferences_name" >
+        </activity>
     </application>
 
 </manifest>

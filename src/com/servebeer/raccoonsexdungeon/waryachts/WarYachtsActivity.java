@@ -148,6 +148,19 @@ public class WarYachtsActivity extends BaseGameActivity
 			}
 		});
 
+		hostGameButton.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				if (!btHandler.isDiscovering())
+				{
+					btHandler.setGameType(GameType.HOST);
+					btHandler.requestEnableBluetooth();
+				}
+			}
+		});
+
 		findGameButton.setOnClickListener(new View.OnClickListener()
 		{
 			@Override
@@ -158,6 +171,16 @@ public class WarYachtsActivity extends BaseGameActivity
 					btHandler.setGameType(GameType.CLIENT);
 					btHandler.requestEnableBluetooth();
 				}
+			}
+		});
+		
+		preferencesButton.setOnClickListener(new View.OnClickListener()
+		{
+			
+			@Override
+			public void onClick(View v)
+			{
+				startActivity(new Intent(getBaseContext(), PreferencesActivity.class));
 			}
 		});
 
