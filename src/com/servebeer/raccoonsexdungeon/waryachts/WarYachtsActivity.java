@@ -155,10 +155,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			{
 				if (!btHandler.isDiscovering())
 				{
-<<<<<<< HEAD
 					btHandler.setGameType(GameType.CLIENT);
-=======
->>>>>>> cbcb36687d9a094049623df6d72e210cfdf8ca61
 					btHandler.requestEnableBluetooth();
 				}
 			}
@@ -170,10 +167,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			public void onClick(View v)
 			{
 				if (btHandler.isDiscovering())
-<<<<<<< HEAD
-=======
 				{
->>>>>>> cbcb36687d9a094049623df6d72e210cfdf8ca61
 					btHandler.kill();
 				}
 				finish();
@@ -206,10 +200,9 @@ public class WarYachtsActivity extends BaseGameActivity
 	{
 		switch (requestCode)
 		{
- 
+
 		case ConnectionHandler.REQUEST_ENABLE_BT:
 		{
-<<<<<<< HEAD
 			if (resultCode == Activity.RESULT_OK)
 			{
 				Toast.makeText(this, "Successfully enabled bluetooth.",
@@ -224,13 +217,6 @@ public class WarYachtsActivity extends BaseGameActivity
 						Toast.LENGTH_LONG).show();
 				finish();
 			}
-=======
-			Toast.makeText(this,
-					"Successfully enabled bluetooth, searching for devices.",
-					Toast.LENGTH_SHORT).show();
-
-			btHandler.onBtEnabled(resultCode);
->>>>>>> cbcb36687d9a094049623df6d72e210cfdf8ca61
 			break;
 		}
 		default:
@@ -244,7 +230,6 @@ public class WarYachtsActivity extends BaseGameActivity
 					Toast.LENGTH_SHORT).show();
 
 			super.onActivityResult(requestCode, resultCode, data);
-<<<<<<< HEAD
 		}
 		}
 	}
@@ -252,11 +237,6 @@ public class WarYachtsActivity extends BaseGameActivity
 	public static ConnectionHandler getConnectionHandler()
 	{
 		return btHandler;
-=======
-		} // default
-
-		} // Switch
->>>>>>> cbcb36687d9a094049623df6d72e210cfdf8ca61
 	}
 
 	@Override
