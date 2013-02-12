@@ -62,8 +62,34 @@ public class WarYachtsActivity extends BaseGameActivity
 		@Override
 		public void onCallback()
 		{
-			Toast.makeText(getBaseContext(), "Yay, we got a connection!",
-					Toast.LENGTH_SHORT).show();
+			runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(getBaseContext(),
+							"Yay, we got a connection!", Toast.LENGTH_SHORT)
+							.show();
+				}
+			});
+		}
+	};
+
+	CallbackVoid noConnectionEstablishedCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+			runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(getBaseContext(),
+							"Oh noes, we gots no connection!", Toast.LENGTH_SHORT)
+							.show();
+				}
+			});
 		}
 	};
 
@@ -121,7 +147,8 @@ public class WarYachtsActivity extends BaseGameActivity
 	{
 		// CONTENT FACTORY AND BACKGROUND CREATION
 		ContentFactory.init(this);
-		btHandler = new ConnectionHandler(this, connectionEstablishedCallback);
+		btHandler = new ConnectionHandler(this, connectionEstablishedCallback,
+				noConnectionEstablishedCallback);
 		oceanBG = BackgroundFactory.createStartBackground();
 
 		// BUTTON CREATION
@@ -153,10 +180,10 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if (!btHandler.isDiscovering())
+				if (!btHandler.isBusy())
 				{
 					btHandler.setGameType(GameType.HOST);
-					btHandler.requestEnableBluetooth();
+					btHandler.requestEnableDiscovery();
 				}
 			}
 		});
@@ -166,21 +193,22 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if (!btHandler.isDiscovering())
+				if (!btHandler.isBusy())
 				{
 					btHandler.setGameType(GameType.CLIENT);
 					btHandler.requestEnableBluetooth();
 				}
 			}
 		});
-		
+
 		preferencesButton.setOnClickListener(new View.OnClickListener()
 		{
-			
+
 			@Override
 			public void onClick(View v)
 			{
-				startActivity(new Intent(getBaseContext(), PreferencesActivity.class));
+				startActivity(new Intent(getBaseContext(),
+						PreferencesActivity.class));
 			}
 		});
 
@@ -189,7 +217,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			@Override
 			public void onClick(View v)
 			{
-				if (btHandler.isDiscovering())
+				if (btHandler.isBusy())
 				{
 					btHandler.kill();
 				}
@@ -230,7 +258,7 @@ public class WarYachtsActivity extends BaseGameActivity
 			{
 				Toast.makeText(this, "Successfully enabled bluetooth.",
 						Toast.LENGTH_SHORT).show();
-				btHandler.onBtEnabled(resultCode);
+				btHandler.onBtEnabled();
 			}
 			else
 			{
@@ -239,6 +267,26 @@ public class WarYachtsActivity extends BaseGameActivity
 						"Could not enable bluetooth, War Yachts will now exit.",
 						Toast.LENGTH_LONG).show();
 				finish();
+			}
+			break;
+		}
+		case ConnectionHandler.REQUEST_ENABLE_DISCOVERY:
+		{
+			if (resultCode == ConnectionHandler.DEFAULT_DISCOVERY_TIME)
+			{
+				Toast.makeText(
+						this,
+						"Successfully enabled discovery, waiting for connection",
+						Toast.LENGTH_SHORT).show();
+				btHandler.onDiscoveryEnabled();
+			}
+			else
+			{
+				Toast.makeText(
+						this,
+						"Could not enable discovery. Try searching instead of hosting.",
+						Toast.LENGTH_SHORT).show();
+				btHandler.stopPretendingToBeBusyWeAllKnowYoureNot();
 			}
 			break;
 		}

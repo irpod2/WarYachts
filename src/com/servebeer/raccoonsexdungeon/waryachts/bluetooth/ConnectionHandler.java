@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import org.andengine.ui.activity.BaseGameActivity;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,6 +14,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -26,18 +26,21 @@ import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 public class ConnectionHandler
 {
 	public static final int REQUEST_ENABLE_BT = 1;
+	public static final int REQUEST_ENABLE_DISCOVERY = 2;
 
 	public static final String serviceName = "WarYachtsConnection";
 	public static final UUID uuid = UUID.nameUUIDFromBytes("WarYachts"
 			.getBytes());
+	public static final int DEFAULT_DISCOVERY_TIME = 120;
 
 	private BaseGameActivity activity;
 	private BluetoothAdapter btAdapter;
 	private BroadcastReceiver deviceReceiver;
 	private BluetoothSocket socket;
 	private CallbackVoid connectionEstablishedCallback;
+	private CallbackVoid noConnectionEstablishedCallback;
 	private ArrayList<String> discoveredDevices;
-	private boolean discovering;
+	private boolean busy;
 	private GameType gameType;
 	private HostThread hostThread;
 	private ClientThread clientThread;
@@ -47,15 +50,18 @@ public class ConnectionHandler
 		HOST, CLIENT
 	}
 
-	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB)
+	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB,
+			CallbackVoid noConnectionCB)
 	{
 		activity = bga;
-		discovering = false;
+		connectionEstablishedCallback = connectionCB;
+		noConnectionEstablishedCallback = noConnectionCB;
+		busy = false;
 	}
 
-	public boolean isDiscovering()
+	public boolean isBusy()
 	{
-		return discovering;
+		return busy;
 	}
 
 	public void setGameType(GameType type)
@@ -65,7 +71,7 @@ public class ConnectionHandler
 
 	public void requestEnableBluetooth()
 	{
-		discovering = true;
+		busy = true;
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (btAdapter != null)
 		{
@@ -78,7 +84,7 @@ public class ConnectionHandler
 			}
 			else
 			{
-				onBtEnabled(Activity.RESULT_OK);
+				onBtEnabled();
 			}
 		}
 		else
@@ -92,29 +98,43 @@ public class ConnectionHandler
 		}
 	}
 
-	// Called as a response to requestEnableBluetooth()
-	public void onBtEnabled(int resultCode)
+	public void requestEnableDiscovery()
 	{
-		switch (gameType)
+		busy = true;
+		btAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (btAdapter != null)
 		{
-		case HOST:
-		{
-			hostThread = new HostThread();
-			hostThread.run();
-			break;
+			Intent enableBtIntent = new Intent(
+					BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+			activity.startActivityForResult(enableBtIntent,
+					REQUEST_ENABLE_DISCOVERY);
 		}
-		case CLIENT:
+		else
 		{
-			findDevices();
-			break;
-		}
-		default:
-		{
-			Toast.makeText(activity, "No game type specified, exiting",
-					Toast.LENGTH_SHORT).show();
+			// Device does not support Bluetooth
+			Toast.makeText(
+					activity,
+					"Your phone does not seem to support bluetooth, War Yachts will now exit.",
+					Toast.LENGTH_LONG).show();
 			activity.finish();
 		}
-		}
+	}
+
+	// Called as a response to requestEnableBluetooth()
+	public void onBtEnabled()
+	{
+		findDevices();
+	}
+
+	public void onDiscoveryEnabled()
+	{
+		hostThread = new HostThread();
+		hostThread.start();
+	}
+
+	public void stopPretendingToBeBusyWeAllKnowYoureNot()
+	{
+		busy = false;
 	}
 
 	public void findDevices()
@@ -123,8 +143,14 @@ public class ConnectionHandler
 
 		if (!pairedDevices.isEmpty())
 		{
-			final String[] deviceArray = pairedDevices
-					.toArray(new String[pairedDevices.size()]);
+			// Put devices in string array of Name\nAddress pairs
+			final String[] deviceArray = new String[pairedDevices.size()];
+			int i = 0;
+			for (BluetoothDevice device : pairedDevices)
+			{
+				deviceArray[i] = device.getName() + "\n" + device.getAddress();
+				i++;
+			}
 
 			AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 			builder.setTitle("Choose an Opponent");
@@ -154,7 +180,23 @@ public class ConnectionHandler
 						}
 					});
 
-			builder.setNegativeButton(R.string.cancel, null);
+			builder.setNegativeButton(R.string.cancel, new OnClickListener()
+			{
+				@Override
+				public void onClick(DialogInterface dialog, int which)
+				{
+					busy = false;
+				}
+			});
+
+			builder.setOnCancelListener(new OnCancelListener()
+			{
+				@Override
+				public void onCancel(DialogInterface dialog)
+				{
+					busy = false;
+				}
+			});
 
 			builder.show();
 		}
@@ -227,13 +269,13 @@ public class ConnectionHandler
 			builder.setCancelable(true);
 
 			builder.show();
-			discovering = false;
+			busy = false;
 		}
 		else
 		{
 			Toast.makeText(activity, "No devices found in range",
 					Toast.LENGTH_SHORT).show();
-			discovering = false;
+			busy = false;
 		}
 	}
 
@@ -244,13 +286,20 @@ public class ConnectionHandler
 				"Connecting to device " + dev.getName() + " at MAC addr "
 						+ dev.getAddress(), Toast.LENGTH_SHORT).show();
 		clientThread = new ClientThread(dev);
-		clientThread.run();
+		clientThread.start();
 	}
 
 	public void handleConnection(BluetoothSocket sock)
 	{
 		socket = sock;
+		busy = false;
 		connectionEstablishedCallback.onCallback();
+	}
+
+	public void noConnection()
+	{
+		busy = false;
+		noConnectionEstablishedCallback.onCallback();
 	}
 
 	public void kill()

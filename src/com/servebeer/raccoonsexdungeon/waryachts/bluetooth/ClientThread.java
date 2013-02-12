@@ -55,6 +55,8 @@ public class ClientThread extends Thread
 			}
 			catch (IOException closeException)
 			{}
+			
+			WarYachtsActivity.getConnectionHandler().noConnection();
 			return;
 		}
 
