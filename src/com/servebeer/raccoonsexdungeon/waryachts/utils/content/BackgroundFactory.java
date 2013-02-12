@@ -1,5 +1,5 @@
 
-package com.servebeer.raccoonsexdungeon.waryachts.utils;
+package com.servebeer.raccoonsexdungeon.waryachts.utils.content;
 
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.scene.background.SpriteBackground;

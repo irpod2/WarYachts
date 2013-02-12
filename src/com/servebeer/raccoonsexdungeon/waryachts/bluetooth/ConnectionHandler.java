@@ -41,14 +41,8 @@ public class ConnectionHandler
 	private CallbackVoid noConnectionEstablishedCallback;
 	private ArrayList<String> discoveredDevices;
 	private boolean busy;
-	private GameType gameType;
 	private HostThread hostThread;
 	private ClientThread clientThread;
-
-	public enum GameType
-	{
-		HOST, CLIENT
-	}
 
 	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB,
 			CallbackVoid noConnectionCB)
@@ -62,11 +56,6 @@ public class ConnectionHandler
 	public boolean isBusy()
 	{
 		return busy;
-	}
-
-	public void setGameType(GameType type)
-	{
-		gameType = type;
 	}
 
 	public void requestEnableBluetooth()
