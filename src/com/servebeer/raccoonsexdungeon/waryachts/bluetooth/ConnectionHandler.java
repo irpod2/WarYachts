@@ -18,6 +18,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.R;
@@ -32,6 +33,14 @@ public class ConnectionHandler
 	public static final UUID uuid = UUID.nameUUIDFromBytes("WarYachts"
 			.getBytes());
 	public static final int DEFAULT_DISCOVERY_TIME = 120;
+	
+	public enum BusyType
+	{
+		NOT_BUSY,
+		DISCOVERING,
+		HOSTING,
+		CONNECTING		
+	}
 
 	private BaseGameActivity activity;
 	private BluetoothAdapter btAdapter;
@@ -40,9 +49,10 @@ public class ConnectionHandler
 	private CallbackVoid connectionEstablishedCallback;
 	private CallbackVoid noConnectionEstablishedCallback;
 	private ArrayList<String> discoveredDevices;
-	private boolean busy;
+	private BusyType busy;
 	private HostThread hostThread;
 	private ClientThread clientThread;
+	
 
 	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB,
 			CallbackVoid noConnectionCB)
@@ -50,17 +60,17 @@ public class ConnectionHandler
 		activity = bga;
 		connectionEstablishedCallback = connectionCB;
 		noConnectionEstablishedCallback = noConnectionCB;
-		busy = false;
+		busy = BusyType.NOT_BUSY;
 	}
 
-	public boolean isBusy()
+	public BusyType getBusyType()
 	{
 		return busy;
 	}
 
 	public void requestEnableBluetooth()
 	{
-		busy = true;
+		busy = BusyType.DISCOVERING;
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (btAdapter != null)
 		{
@@ -89,7 +99,7 @@ public class ConnectionHandler
 
 	public void requestEnableDiscovery()
 	{
-		busy = true;
+		busy = BusyType.HOSTING;
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (btAdapter != null)
 		{
@@ -120,10 +130,10 @@ public class ConnectionHandler
 		hostThread = new HostThread();
 		hostThread.start();
 	}
-
-	public void stopPretendingToBeBusyWeAllKnowYoureNot()
+	
+	public BluetoothSocket getSocket()
 	{
-		busy = false;
+		return socket;
 	}
 
 	public void findDevices()
@@ -174,7 +184,7 @@ public class ConnectionHandler
 				@Override
 				public void onClick(DialogInterface dialog, int which)
 				{
-					busy = false;
+					busy = BusyType.NOT_BUSY;
 				}
 			});
 
@@ -183,7 +193,7 @@ public class ConnectionHandler
 				@Override
 				public void onCancel(DialogInterface dialog)
 				{
-					busy = false;
+					busy = BusyType.NOT_BUSY;
 				}
 			});
 
@@ -250,6 +260,7 @@ public class ConnectionHandler
 							.substring(deviceArray[which].lastIndexOf("\n") + 1);
 					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
 					connectToDevice(dev);
+					
 				}
 			});
 
@@ -258,18 +269,20 @@ public class ConnectionHandler
 			builder.setCancelable(true);
 
 			builder.show();
-			busy = false;
+			busy = BusyType.NOT_BUSY;
 		}
 		else
 		{
 			Toast.makeText(activity, "No devices found in range",
 					Toast.LENGTH_SHORT).show();
-			busy = false;
+			busy = BusyType.NOT_BUSY;
 		}
 	}
 
 	protected void connectToDevice(BluetoothDevice dev)
 	{
+		busy = BusyType.CONNECTING;
+		
 		Toast.makeText(
 				activity,
 				"Connecting to device " + dev.getName() + " at MAC addr "
@@ -281,23 +294,59 @@ public class ConnectionHandler
 	public void handleConnection(BluetoothSocket sock)
 	{
 		socket = sock;
-		busy = false;
+		busy = BusyType.NOT_BUSY;
 		connectionEstablishedCallback.onCallback();
 	}
 
 	public void noConnection()
 	{
-		busy = false;
+		busy = BusyType.NOT_BUSY;
 		noConnectionEstablishedCallback.onCallback();
 	}
 
-	public void kill()
+	public void reset()
 	{
-		if (btAdapter != null && btAdapter.isDiscovering())
+		switch (busy)
 		{
-			btAdapter.cancelDiscovery();
-			activity.unregisterReceiver(deviceReceiver);
+		// If not busy, no need to do anything
+		case NOT_BUSY:
+			break;
+			
+		// If discovering, cancel discovery and unregister the receiver	
+		case DISCOVERING:
+			if (btAdapter != null && btAdapter.isDiscovering())
+			{
+				btAdapter.cancelDiscovery();
+				try{
+					activity.unregisterReceiver(deviceReceiver);
+				}catch(Exception e)
+				{
+					Log.e("Reset during discovering", "Could not unregister device reciever.");
+				}
+			}
+			break;
+
+		// If connecting, 	
+		case CONNECTING:
+			if( clientThread != null)
+			{
+				clientThread.cancel();
+			}
+			break;
+			
+		// If Hosting, kill host thread mercilessly 	
+		case HOSTING:
+			if ( hostThread != null )
+			{
+				hostThread.cancel();
+				hostThread = null;
+			}
+			break;
+			
 		}
+		
+		// Ensure the busy type is NOT_BUSY
+		busy = BusyType.NOT_BUSY;
 	}
 
 }

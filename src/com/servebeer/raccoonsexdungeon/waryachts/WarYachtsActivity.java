@@ -186,7 +186,7 @@ public class WarYachtsActivity extends BaseGameActivity
 		public void onCallback()
 		{
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback);
+					gameInstanceScene, prepareStartMenuCallback, btHandler);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, currentScenario, nextScenario,
 					switchScenarioCallback);
@@ -198,6 +198,7 @@ public class WarYachtsActivity extends BaseGameActivity
 		@Override
 		public void onCallback()
 		{
+			btHandler.reset();
 			nextScenario = new StartMenuScenario(WarYachtsActivity.this,
 					startMenuScene);
 			transitionHandler = new ComposedTransitionHandler(
@@ -252,7 +253,7 @@ public class WarYachtsActivity extends BaseGameActivity
 						this,
 						"Could not enable discovery. Try searching instead of hosting.",
 						Toast.LENGTH_SHORT).show();
-				btHandler.stopPretendingToBeBusyWeAllKnowYoureNot();
+				btHandler.reset();
 			}
 			break;
 		}

@@ -12,6 +12,7 @@ import android.content.Intent;
 import com.servebeer.raccoonsexdungeon.waryachts.PreferencesActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler.BusyType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
 
@@ -51,7 +52,7 @@ public class StartMenuScenario implements IScenario
 							@Override
 							public void run()
 							{
-								if (!btHandler.isBusy())
+								if (btHandler.getBusyType() == BusyType.NOT_BUSY)
 								{
 									btHandler.requestEnableDiscovery();
 								}
@@ -72,7 +73,7 @@ public class StartMenuScenario implements IScenario
 							@Override
 							public void run()
 							{
-								if (!btHandler.isBusy())
+								if (btHandler.getBusyType() == BusyType.NOT_BUSY)
 								{
 									btHandler.requestEnableBluetooth();
 								}
@@ -100,10 +101,8 @@ public class StartMenuScenario implements IScenario
 					public void onClick(ButtonSprite pButtonSprite,
 							float pTouchAreaLocalX, float pTouchAreaLocalY)
 					{
-						if (btHandler.isBusy())
-						{
-							btHandler.kill();
-						}
+
+						btHandler.reset();
 						activity.finish();
 					}
 				});

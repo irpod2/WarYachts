@@ -9,6 +9,8 @@ import org.andengine.ui.activity.BaseGameActivity;
 
 import android.widget.Toast;
 
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.OutputCommThread;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
@@ -20,20 +22,25 @@ public class GameInstanceScenario implements IScenario
 	protected CallbackVoid onBackCallback;
 	protected ButtonSprite button;
 	protected boolean ready;
+	protected ConnectionHandler btHandler;
 
-	public GameInstanceScenario(BaseGameActivity bga, Scene scn, CallbackVoid onBackCB)
+	public GameInstanceScenario(BaseGameActivity bga, Scene scn, CallbackVoid onBackCB, 
+			ConnectionHandler conHandler)
 	{
 		activity = bga;
 		scene = scn;
 		onBackCallback = onBackCB;
 		ready = false;
-
+		btHandler = conHandler;
+		
 		button = ButtonFactory.createButton(new OnClickListener()
 		{
 			@Override
 			public void onClick(ButtonSprite pButtonSprite,
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
+				button.setEnabled(false);
+				
 				activity.runOnUiThread(new Runnable()
 				{
 					@Override
@@ -41,6 +48,7 @@ public class GameInstanceScenario implements IScenario
 					{
 						Toast.makeText(activity, "Clicked the button!",
 								Toast.LENGTH_SHORT).show();
+
 					}
 				});
 			}
@@ -54,6 +62,13 @@ public class GameInstanceScenario implements IScenario
 	{
 		return ready;
 	}
+	
+	public void  write(String msg)
+	{
+		OutputCommThread t = new OutputCommThread(btHandler.getSocket(), "HOW YOU DOIN?!?");
+		t.start();
+	}
+	
 
 	@Override
 	public void prepareStart()

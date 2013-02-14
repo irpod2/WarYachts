@@ -3,9 +3,12 @@ package com.servebeer.raccoonsexdungeon.waryachts.bluetooth;
 
 import java.io.IOException;
 
+import org.andengine.ui.activity.BaseGameActivity;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 
@@ -75,4 +78,5 @@ public class HostThread extends Thread
 		catch (IOException e)
 		{}
 	}
+	
 }
