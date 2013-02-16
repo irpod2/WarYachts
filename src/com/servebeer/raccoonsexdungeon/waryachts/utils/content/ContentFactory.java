@@ -11,6 +11,8 @@ import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 public class ContentFactory
 {
 	protected static final int FONT_SIZE = 64;
+	protected static final float SIZE_RATIO = WarYachtsActivity.CAMERA_WIDTH
+			/ WarYachtsActivity.getCameraWidth();
 
 	protected static BaseGameActivity activity;
 	protected static int cameraWidth;
@@ -29,6 +31,7 @@ public class ContentFactory
 		cameraHeight = WarYachtsActivity.getCameraHeight();
 
 		loadContent();
+		SpriteFactory.loadContent();
 		LOAD_COMPLETE = true;
 	}
 

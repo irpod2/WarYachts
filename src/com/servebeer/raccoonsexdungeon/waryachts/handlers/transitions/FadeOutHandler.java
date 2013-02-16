@@ -1,9 +1,10 @@
 
 package com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions;
 
+import org.andengine.engine.camera.Camera;
+import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.primitive.Rectangle;
-import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.color.Color;
 
@@ -15,28 +16,27 @@ public class FadeOutHandler implements ITransitionHandler, IUpdateHandler
 {
 	protected BaseGameActivity activity;
 	protected IScenario scenario;
-	protected Scene scene;
-	protected CallbackVoid onFinishedCallback;
+	protected HUD hud;
 	protected Rectangle fadeBox;
+	protected CallbackVoid onFinishedCallback;
 	protected float totalTimeElapsed;
 
-	public FadeOutHandler(BaseGameActivity bga, IScenario iScenario,
-			CallbackVoid onFinishedCB)
+	public FadeOutHandler(BaseGameActivity bga, Camera cam,
+			IScenario iScenario, CallbackVoid onFinishedCB)
 	{
 		activity = bga;
 		scenario = iScenario;
-		scene = scenario.getScene();
 		onFinishedCallback = onFinishedCB;
-		int cameraWidth = WarYachtsActivity.getCameraWidth();
-		int cameraHeight = WarYachtsActivity.getCameraHeight();
-		fadeBox = new Rectangle(0, 0, cameraWidth, cameraHeight,
+		hud = cam.getHUD();
+		fadeBox = new Rectangle(0, 0, WarYachtsActivity.getCameraWidth(),
+				WarYachtsActivity.getCameraHeight(),
 				activity.getVertexBufferObjectManager());
 		fadeBox.setColor(Color.BLACK);
-		fadeBox.setAlpha(0);
-		scene.attachChild(fadeBox);
+		fadeBox.setAlpha(0.0f);
+		hud.attachChild(fadeBox);
 		totalTimeElapsed = 0;
 		scenario.prepareEnd();
-		scene.registerUpdateHandler(this);
+		scenario.getScene().registerUpdateHandler(this);
 	}
 
 	@Override
@@ -49,10 +49,11 @@ public class FadeOutHandler implements ITransitionHandler, IUpdateHandler
 		}
 		else
 		{
-			scene.unregisterUpdateHandler(this);
-			scene.detachChild(fadeBox);
+			scenario.getScene().unregisterUpdateHandler(this);
+			fadeBox.setAlpha(1.0f);
 			scenario.end();
 			onFinishedCallback.onCallback();
+			hud.detachChild(fadeBox);
 		}
 	}
 

@@ -2,6 +2,7 @@
 package com.servebeer.raccoonsexdungeon.waryachts;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -40,6 +41,7 @@ public class WarYachtsActivity extends BaseGameActivity
 	// ===========================================================
 
 	protected Camera camera;
+	protected HUD hud;
 	public static int cameraWidth = CAMERA_WIDTH;
 	public static int cameraHeight = CAMERA_HEIGHT;
 	protected Scene startMenuScene;
@@ -105,6 +107,8 @@ public class WarYachtsActivity extends BaseGameActivity
 		startMenuScene = new Scene();
 		gameInstanceScene = new Scene();
 		currentScenario = new StartMenuScenario(this, startMenuScene);
+		hud = new HUD();
+		camera.setHUD(hud);
 
 		pOnCreateSceneCallback.onCreateSceneFinished(startMenuScene);
 	}
@@ -113,7 +117,7 @@ public class WarYachtsActivity extends BaseGameActivity
 	public void onPopulateScene(Scene pScene,
 			OnPopulateSceneCallback pOnPopulateSceneCallback) throws Exception
 	{
-		transitionHandler = new FadeInHandler(this, currentScenario,
+		transitionHandler = new FadeInHandler(this, camera, currentScenario,
 				doNothingCallback);
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 	}
@@ -188,8 +192,8 @@ public class WarYachtsActivity extends BaseGameActivity
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
 					gameInstanceScene, prepareStartMenuCallback, btHandler);
 			transitionHandler = new ComposedTransitionHandler(
-					WarYachtsActivity.this, currentScenario, nextScenario,
-					switchScenarioCallback);
+					WarYachtsActivity.this, camera, currentScenario,
+					nextScenario, switchScenarioCallback);
 		}
 	};
 
@@ -202,8 +206,8 @@ public class WarYachtsActivity extends BaseGameActivity
 			nextScenario = new StartMenuScenario(WarYachtsActivity.this,
 					startMenuScene);
 			transitionHandler = new ComposedTransitionHandler(
-					WarYachtsActivity.this, currentScenario, nextScenario,
-					switchScenarioCallback);
+					WarYachtsActivity.this, camera, currentScenario,
+					nextScenario, switchScenarioCallback);
 		}
 	};
 
@@ -293,15 +297,6 @@ public class WarYachtsActivity extends BaseGameActivity
 	public void onBackPressed()
 	{
 		// If the scenario doesn't handle back presses, pass it up
-		runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				Toast.makeText(getBaseContext(), "Back pressed",
-						Toast.LENGTH_SHORT).show();
-			}
-		});
 		if (!currentScenario.handleBackPress())
 			super.onBackPressed();
 	}
