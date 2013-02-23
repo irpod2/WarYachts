@@ -53,6 +53,10 @@ public class ConnectionHandler
 	private HostThread hostThread;
 	private ClientThread clientThread;
 	
+	protected InputCommThread inThread;
+	
+	private int msgCnt;
+	 
 
 	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB,
 			CallbackVoid noConnectionCB)
@@ -61,6 +65,8 @@ public class ConnectionHandler
 		connectionEstablishedCallback = connectionCB;
 		noConnectionEstablishedCallback = noConnectionCB;
 		busy = BusyType.NOT_BUSY;
+		
+		msgCnt = 0;
 	}
 
 	public BusyType getBusyType()
@@ -295,7 +301,19 @@ public class ConnectionHandler
 	{
 		socket = sock;
 		busy = BusyType.NOT_BUSY;
-		connectionEstablishedCallback.onCallback();
+		
+		
+		inThread = new InputCommThread(socket, activity);
+		inThread.start();
+		
+		connectionEstablishedCallback.onCallback();		
+	}
+	
+	public void sendMsg(String msg)
+	{
+		msgCnt++;
+		OutputCommThread outThread = new OutputCommThread(socket, msg + Integer.toString(msgCnt));
+		outThread.start();
 	}
 
 	public void noConnection()

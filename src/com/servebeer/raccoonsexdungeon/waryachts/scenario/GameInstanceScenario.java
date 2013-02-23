@@ -72,16 +72,9 @@ public class GameInstanceScenario implements IScenario
 			public void onClick(ButtonSprite pButtonSprite,
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
-				activity.runOnUiThread(new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						Toast.makeText(activity, "Clicked the button!",
-								Toast.LENGTH_SHORT).show();
+				
+				btHandler.sendMsg("HELLO FRIEND!");
 
-					}
-				});
 			}
 		});
 		button.setY(WarYachtsActivity.getCameraHeight()
@@ -112,10 +105,10 @@ public class GameInstanceScenario implements IScenario
 		// User Battlefield
 		layers.get(USER_FIELD).attachChild(button);
 		layers.get(USER_FIELD).attachChild(userBattlefield.getSprite());
-		
+
 		// War Battlefield
 		layers.get(WAR_FIELD).attachChild(enemyBattlefield.getSprite());
-		
+
 		// Chat (no chat stuff now)
 	}
 

@@ -141,6 +141,7 @@ public class WarYachtsActivity extends BaseGameActivity
 							.show();
 				}
 			});
+			
 		}
 	};
 
