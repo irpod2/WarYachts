@@ -7,12 +7,14 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegion
 import org.andengine.opengl.texture.region.TextureRegion;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Targeter;
 
 public class SpriteFactory extends ContentFactory
 {
 	protected static TextureRegion gridRegion;
 	protected static TextureRegion hitRegion;
 	protected static TextureRegion missRegion;
+	protected static TextureRegion targeterRegion;
 	protected static final float GRID_RATIO = SIZE_RATIO
 			* WarYachtsActivity.getCameraWidth() / 512;
 	public static final float GRID_PADDING = GRID_RATIO * 34.0f;
@@ -38,9 +40,20 @@ public class SpriteFactory extends ContentFactory
 		// Miss
 		BitmapTextureAtlas missAtlas = new BitmapTextureAtlas(
 				activity.getTextureManager(), 64, 64);
-		missRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(
-				hitAtlas, activity.getAssets(), "sprites/MissCircle.png", 0, 0);
+		missRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(missAtlas, activity.getAssets(),
+						"sprites/MissCircle.png", 0, 0);
 		missAtlas.load();
+
+		// Targeter
+		BitmapTextureAtlas targeterAtlas = new BitmapTextureAtlas(
+				activity.getTextureManager(), 64, 64);
+		targeterRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(targeterAtlas, activity.getAssets(),
+						"sprites/TargetCircle.png", 0, 0);
+		targeterAtlas.load();
+		
+		YachtFactory.loadContent();
 	}
 
 	public static Sprite createGrid()
@@ -50,15 +63,15 @@ public class SpriteFactory extends ContentFactory
 		return gridSprite;
 	}
 
-	protected static float getCellLocation(int index)
+	public static float getCellLocation(int index)
 	{
 		return GRID_PADDING + GRID_CELL_SIZE * index;
 	}
 
 	public static Sprite createHitSprite(int row, int col)
 	{
-		Sprite hitSprite = new Sprite(getCellLocation(row),
-				getCellLocation(col), GRID_CELL_SIZE - SPRITE_PADDING,
+		Sprite hitSprite = new Sprite(getCellLocation(col),
+				getCellLocation(row), GRID_CELL_SIZE - SPRITE_PADDING,
 				GRID_CELL_SIZE - SPRITE_PADDING, hitRegion,
 				activity.getVertexBufferObjectManager());
 		return hitSprite;
@@ -66,10 +79,18 @@ public class SpriteFactory extends ContentFactory
 
 	public static Sprite createMissSprite(int row, int col)
 	{
-		Sprite missSprite = new Sprite(getCellLocation(row),
-				getCellLocation(col), GRID_CELL_SIZE - SPRITE_PADDING,
+		Sprite missSprite = new Sprite(getCellLocation(col),
+				getCellLocation(row), GRID_CELL_SIZE - SPRITE_PADDING,
 				GRID_CELL_SIZE - SPRITE_PADDING, missRegion,
 				activity.getVertexBufferObjectManager());
 		return missSprite;
+	}
+
+	public static Targeter createTargeter()
+	{
+		Targeter targeter = new Targeter(0, 0, 0, 0, GRID_CELL_SIZE
+				- SPRITE_PADDING, GRID_CELL_SIZE - SPRITE_PADDING,
+				targeterRegion, activity.getVertexBufferObjectManager());
+		return targeter;
 	}
 }

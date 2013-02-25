@@ -298,7 +298,7 @@ public class WarYachtsActivity extends BaseGameActivity
 	public void onBackPressed()
 	{
 		// If the scenario doesn't handle back presses, pass it up
-		if (!currentScenario.handleBackPress())
+		if (currentScenario == null || !currentScenario.handleBackPress())
 			super.onBackPressed();
 	}
 

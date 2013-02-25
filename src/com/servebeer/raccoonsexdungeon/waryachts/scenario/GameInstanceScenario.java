@@ -10,12 +10,9 @@ import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
 import org.andengine.ui.activity.BaseGameActivity;
 
-import android.widget.Toast;
-
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Battlefield;
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Yacht;
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Yacht.Orientation;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht.Orientation;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.OutputCommThread;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
@@ -49,10 +46,16 @@ public class GameInstanceScenario implements IScenario
 		btHandler = conHandler;
 		userBattlefield = new Battlefield();
 		enemyBattlefield = new Battlefield();
-		userBattlefield.addYacht(new Yacht(3, 4, Orientation.HORIZONTAL, 3,
-				YachtFactory.createWarYacht(3, 4, Orientation.HORIZONTAL)));
-		userBattlefield.addYacht(new Yacht(6, 5, Orientation.VERTICAL, 3,
-				YachtFactory.createSubYacht(6, 5, Orientation.VERTICAL)));
+		userBattlefield.addYacht(YachtFactory.createSubYacht(3, 4,
+				Orientation.HORIZONTAL));
+		userBattlefield.addYacht(YachtFactory.createWarYacht(6, 5,
+				Orientation.VERTICAL));
+		userBattlefield.addYacht(YachtFactory.createDestroyerYacht(0, 0,
+				Orientation.HORIZONTAL));
+		userBattlefield.addYacht(YachtFactory.createCarrierYacht(1, 2,
+				Orientation.HORIZONTAL));
+		userBattlefield.addYacht(YachtFactory.createSkunkerYacht(2, 4,
+				Orientation.HORIZONTAL));
 
 		// Create layers for scene and attach them
 		layers = new ArrayList<Entity>();
@@ -72,7 +75,7 @@ public class GameInstanceScenario implements IScenario
 			public void onClick(ButtonSprite pButtonSprite,
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
-				
+
 				btHandler.sendMsg("HELLO FRIEND!");
 
 			}

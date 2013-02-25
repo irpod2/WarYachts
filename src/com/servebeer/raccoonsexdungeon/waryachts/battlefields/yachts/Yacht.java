@@ -1,9 +1,9 @@
 
-package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
+package com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts;
 
 import org.andengine.entity.sprite.Sprite;
 
-public class Yacht
+public abstract class Yacht
 {
 	protected Sprite yachtSprite;
 	protected int units;
@@ -55,9 +55,9 @@ public class Yacht
 		switch (orientation)
 		{
 		case HORIZONTAL:
-			return ((row == r) && (col <= c) && (c <= col + units));
+			return ((row == r) && (col <= c) && (c < col + units));
 		case VERTICAL:
-			return ((col == c) && (row <= r) && (r <= row + units));
+			return ((col == c) && (row <= r) && (r < row + units));
 		}
 		// Will never reach here
 		return false;

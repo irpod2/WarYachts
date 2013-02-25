@@ -8,6 +8,7 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 
 public class Battlefield implements ITouchArea
@@ -16,12 +17,14 @@ public class Battlefield implements ITouchArea
 	protected Shot[][] shots;
 	protected Sprite gridSprite;
 	protected ArrayList<Yacht> yachts;
+	protected Targeter targeter;
 
 	public Battlefield()
 	{
 		gridSprite = SpriteFactory.createGrid();
 		yachts = new ArrayList<Yacht>();
 		shots = new Shot[GRID_SIZE][GRID_SIZE];
+		targeter = SpriteFactory.createTargeter();
 	}
 
 	public boolean addYacht(Yacht y)
@@ -35,8 +38,20 @@ public class Battlefield implements ITouchArea
 			return false;
 	}
 
+	public void attachTargeter(int row, int col)
+	{
+		targeter.setLocation(row, col);
+		gridSprite.attachChild(targeter);
+	}
+
+	public void setTargeter(int row, int col)
+	{
+		targeter.setLocation(row, col);
+	}
+
 	public void shoot(int row, int col)
 	{
+		gridSprite.detachChild(targeter);
 		for (Yacht y : yachts)
 		{
 			if (y.shoot(row, col))
@@ -73,8 +88,8 @@ public class Battlefield implements ITouchArea
 	public float[] convertSceneToLocalCoordinates(float pX, float pY)
 	{
 		float[] coords = new float[2];
-		coords[0] = pY - gridSprite.getY() - SpriteFactory.GRID_PADDING;
-		coords[1] = pX - gridSprite.getX() - SpriteFactory.GRID_PADDING;
+		coords[0] = pX - gridSprite.getX() - SpriteFactory.GRID_PADDING;
+		coords[1] = pY - gridSprite.getY() - SpriteFactory.GRID_PADDING;
 		return coords;
 	}
 
@@ -82,8 +97,8 @@ public class Battlefield implements ITouchArea
 	public float[] convertLocalToSceneCoordinates(float pX, float pY)
 	{
 		float[] coords = new float[2];
-		coords[0] = pY + gridSprite.getY() + SpriteFactory.GRID_PADDING;
-		coords[1] = pX + gridSprite.getX() + SpriteFactory.GRID_PADDING;
+		coords[0] = pX + gridSprite.getX() + SpriteFactory.GRID_PADDING;
+		coords[1] = pY + gridSprite.getY() + SpriteFactory.GRID_PADDING;
 		return coords;
 	}
 
@@ -91,11 +106,23 @@ public class Battlefield implements ITouchArea
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
 			float pTouchAreaLocalX, float pTouchAreaLocalY)
 	{
+
 		int row = getCellFromPosition(pTouchAreaLocalY);
 		int col = getCellFromPosition(pTouchAreaLocalX);
 		if (0 <= row && row < GRID_SIZE && 0 <= col && col < GRID_SIZE)
 		{
-			shoot(row, col);
+			if (pSceneTouchEvent.isActionDown())
+				attachTargeter(row, col);
+			else if (pSceneTouchEvent.isActionMove()
+					&& (targeter.getRow() != row || targeter.getCol() != col))
+				setTargeter(row, col);
+			else if (pSceneTouchEvent.isActionUp())
+			{
+				if(shots[row][col] == null)
+					shoot(row, col);
+				else
+					gridSprite.detachChild(targeter);
+			}
 		}
 		return true;
 	}

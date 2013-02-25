@@ -3,12 +3,10 @@ package com.servebeer.raccoonsexdungeon.waryachts.bluetooth;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 
 public class OutputCommThread extends Thread
 {
-	private final BluetoothAdapter btAdapter;
 	private final BluetoothSocket outputSocket;
 	private final String outMsg;
 	
@@ -16,8 +14,6 @@ public class OutputCommThread extends Thread
 	public OutputCommThread(BluetoothSocket socket, String msg)
 	{
 		outputSocket = socket;
-		
-		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		
 		outMsg = msg;
 	}
@@ -43,7 +39,7 @@ public class OutputCommThread extends Thread
 		while (bytesToTransfer > 0) {
 		    try
 			{
-				outStream.writeChars(outMsg);
+				outStream.write(outMsg.getBytes());
 
 				outStream.flush();
 			}
@@ -51,7 +47,7 @@ public class OutputCommThread extends Thread
 			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				return;
+				break;
 			}
 		    bytesToTransfer -= 1;
 		}
