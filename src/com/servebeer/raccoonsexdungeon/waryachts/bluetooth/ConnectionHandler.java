@@ -10,7 +10,6 @@ import org.andengine.ui.activity.BaseGameActivity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,6 +21,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.R;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 
 public class ConnectionHandler
@@ -33,40 +33,32 @@ public class ConnectionHandler
 	public static final UUID uuid = UUID.nameUUIDFromBytes("WarYachts"
 			.getBytes());
 	public static final int DEFAULT_DISCOVERY_TIME = 120;
-	
+
 	public enum BusyType
 	{
-		NOT_BUSY,
-		DISCOVERING,
-		HOSTING,
-		CONNECTING		
+		NOT_BUSY, DISCOVERING, HOSTING, CONNECTING
 	}
 
 	private BaseGameActivity activity;
 	private BluetoothAdapter btAdapter;
 	private BroadcastReceiver deviceReceiver;
-	private BluetoothSocket socket;
-	private CallbackVoid connectionEstablishedCallback;
-	private CallbackVoid noConnectionEstablishedCallback;
+	private BluetoothDevice opponentDevice;
 	private ArrayList<String> discoveredDevices;
 	private BusyType busy;
-	private HostThread hostThread;
-	private ClientThread clientThread;
-	
-	protected InputCommThread inThread;
-	
-	private int msgCnt;
-	 
+	private CallbackVoid networkNowFreeCallback;
+	private CallbackVoid foundGameCallback;
 
-	public ConnectionHandler(BaseGameActivity bga, CallbackVoid connectionCB,
-			CallbackVoid noConnectionCB)
+	protected InputCommThread inThread;
+	protected OutputCommThread outThread;
+
+
+	public ConnectionHandler(BaseGameActivity bga, CallbackVoid nwNowFreeCB,
+			CallbackVoid foundGameCB)
 	{
 		activity = bga;
-		connectionEstablishedCallback = connectionCB;
-		noConnectionEstablishedCallback = noConnectionCB;
 		busy = BusyType.NOT_BUSY;
-		
-		msgCnt = 0;
+		networkNowFreeCallback = nwNowFreeCB;
+		foundGameCallback = foundGameCB;
 	}
 
 	public BusyType getBusyType()
@@ -133,13 +125,7 @@ public class ConnectionHandler
 
 	public void onDiscoveryEnabled()
 	{
-		hostThread = new HostThread();
-		hostThread.start();
-	}
-	
-	public BluetoothSocket getSocket()
-	{
-		return socket;
+		listen();
 	}
 
 	public void findDevices()
@@ -168,7 +154,12 @@ public class ConnectionHandler
 					String mac = deviceArray[which]
 							.substring(deviceArray[which].lastIndexOf("\n") + 1);
 					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
-					connectToDevice(dev);
+					opponentDevice = dev;
+					Toast.makeText(activity, "Device is set",
+							Toast.LENGTH_SHORT).show();
+					foundGameCallback.onCallback();
+					ControlMessage ctrlMsg = ControlMessage.createChatMessage("I found you!");
+					sendMsg(ctrlMsg);
 				}
 			});
 
@@ -265,8 +256,12 @@ public class ConnectionHandler
 					String mac = deviceArray[which]
 							.substring(deviceArray[which].lastIndexOf("\n") + 1);
 					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
-					connectToDevice(dev);
-					
+					opponentDevice = dev;
+					Toast.makeText(activity, "Device is set",
+							Toast.LENGTH_SHORT).show();
+					foundGameCallback.onCallback();
+					ControlMessage ctrlMsg = ControlMessage.createChatMessage("I found you!");
+					sendMsg(ctrlMsg);
 				}
 			});
 
@@ -285,41 +280,36 @@ public class ConnectionHandler
 		}
 	}
 
-	protected void connectToDevice(BluetoothDevice dev)
+	public void setDevice(BluetoothDevice dev)
+	{
+		if (opponentDevice == null)
+			opponentDevice = dev;
+	}
+
+	public void listen()
+	{
+		busy = BusyType.HOSTING;
+		// Go back to listening
+		activity.runOnUpdateThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				// Create Input Comm Thread
+				inThread = new InputCommThread(activity);
+				inThread.start();
+
+				// Notify Current Scenario that it can use the network
+				networkNowFreeCallback.onCallback();
+			}
+		});
+	}
+
+	public void sendMsg(ControlMessage ctrlMsg)
 	{
 		busy = BusyType.CONNECTING;
-		
-		Toast.makeText(
-				activity,
-				"Connecting to device " + dev.getName() + " at MAC addr "
-						+ dev.getAddress(), Toast.LENGTH_SHORT).show();
-		clientThread = new ClientThread(dev);
-		clientThread.start();
-	}
-
-	public void handleConnection(BluetoothSocket sock)
-	{
-		socket = sock;
-		busy = BusyType.NOT_BUSY;
-		
-		
-		inThread = new InputCommThread(socket, activity);
-		inThread.start();
-		
-		connectionEstablishedCallback.onCallback();		
-	}
-	
-	public void sendMsg(String msg)
-	{
-		msgCnt++;
-		OutputCommThread outThread = new OutputCommThread(socket, msg + Integer.toString(msgCnt));
+		outThread = new OutputCommThread(activity, opponentDevice, ctrlMsg.getMessage());
 		outThread.start();
-	}
-
-	public void noConnection()
-	{
-		busy = BusyType.NOT_BUSY;
-		noConnectionEstablishedCallback.onCallback();
 	}
 
 	public void reset()
@@ -329,40 +319,44 @@ public class ConnectionHandler
 		// If not busy, no need to do anything
 		case NOT_BUSY:
 			break;
-			
-		// If discovering, cancel discovery and unregister the receiver	
+
+		// If discovering, cancel discovery and unregister the receiver
 		case DISCOVERING:
 			if (btAdapter != null && btAdapter.isDiscovering())
 			{
 				btAdapter.cancelDiscovery();
-				try{
-					activity.unregisterReceiver(deviceReceiver);
-				}catch(Exception e)
+				try
 				{
-					Log.e("Reset during discovering", "Could not unregister device reciever.");
+					activity.unregisterReceiver(deviceReceiver);
+				}
+				catch (Exception e)
+				{
+					Log.e("Reset during discovering",
+							"Could not unregister device reciever.");
 				}
 			}
 			break;
 
-		// If connecting, 	
-		case CONNECTING:
-			if( clientThread != null)
-			{
-				clientThread.cancel();
-			}
-			break;
-			
-		// If Hosting, kill host thread mercilessly 	
+		// If connecting,
 		case HOSTING:
-			if ( hostThread != null )
+			if (inThread != null)
 			{
-				hostThread.cancel();
-				hostThread = null;
+				inThread.kill();
+				inThread = null;
 			}
 			break;
-			
+
+		// If Hosting, kill host thread mercilessly
+		case CONNECTING:
+			if (outThread != null)
+			{
+				outThread.kill();
+				outThread = null;
+			}
+			break;
+
 		}
-		
+
 		// Ensure the busy type is NOT_BUSY
 		busy = BusyType.NOT_BUSY;
 	}

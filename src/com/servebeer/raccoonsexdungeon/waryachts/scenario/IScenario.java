@@ -21,4 +21,6 @@ public interface IScenario
 	public Scene getScene();
 	
 	public boolean handleBackPress();
+	
+	public void onNetworkNowFree();
 }

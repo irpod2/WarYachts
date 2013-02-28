@@ -153,4 +153,8 @@ public class StartMenuScenario implements IScenario
 	{
 		return false;
 	}
+
+	@Override
+	public void onNetworkNowFree()
+	{}
 }

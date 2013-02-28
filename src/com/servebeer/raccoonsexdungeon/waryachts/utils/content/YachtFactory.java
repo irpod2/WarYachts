@@ -22,8 +22,8 @@ public class YachtFactory extends SpriteFactory
 
 	public static final int SHIPNO_CARRIER = 0;
 	public static final int SHIPNO_DESTROYER = 1;
-	public static final int SHIPNO_WARYACHT = 2;
-	public static final int SHIPNO_SUBYACHT = 3;
+	public static final int SHIPNO_SUBYACHT = 2;
+	public static final int SHIPNO_WARYACHT = 3;
 	public static final int SHIPNO_SKUNKER = 4;
 
 	public static void loadContent()
@@ -116,8 +116,10 @@ public class YachtFactory extends SpriteFactory
 	protected static Sprite createBlueYacht(int row, int col, Orientation or,
 			int shipNo)
 	{
+
 		Sprite yachtSprite = new Sprite(getCellLocation(col),
-				getCellLocation(row), blueYachtRegions.get(shipNo),
+				getCellLocation(row - (or == Orientation.VERTICAL ? 1 : 0)),
+				blueYachtRegions.get(shipNo),
 				activity.getVertexBufferObjectManager());
 		yachtSprite.setScaleCenter(0, 0);
 		yachtSprite.setScale(GRID_CELL_SIZE / yachtSprite.getHeight());
@@ -131,7 +133,6 @@ public class YachtFactory extends SpriteFactory
 			yachtSprite.setRotation(90.0f);
 			// Sprite appears displaced vertically by 1 row, so counter this
 			// by adding 1 row
-			yachtSprite.setY(yachtSprite.getY() - getCellLocation(1));
 			break;
 		}
 		return yachtSprite;

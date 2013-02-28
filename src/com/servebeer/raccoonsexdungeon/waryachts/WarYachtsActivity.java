@@ -94,8 +94,8 @@ public class WarYachtsActivity extends BaseGameActivity
 		// CONTENT FACTORY INITIALIZATION
 		ContentFactory.init(this);
 
-		btHandler = new ConnectionHandler(this, connectionEstablishedCallback,
-				noConnectionEstablishedCallback);
+		btHandler = new ConnectionHandler(this, networkNowFreeCallback,
+				prepareGameInstanceCallback);
 
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
 	}
@@ -126,40 +126,12 @@ public class WarYachtsActivity extends BaseGameActivity
 	// Connection Callbacks
 	// =================================================================
 
-	CallbackVoid connectionEstablishedCallback = new CallbackVoid()
+	CallbackVoid networkNowFreeCallback = new CallbackVoid()
 	{
 		@Override
 		public void onCallback()
 		{
-			runOnUiThread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					Toast.makeText(getBaseContext(),
-							"Yay, we got a connection!", Toast.LENGTH_SHORT)
-							.show();
-				}
-			});
-			
-		}
-	};
-
-	CallbackVoid noConnectionEstablishedCallback = new CallbackVoid()
-	{
-		@Override
-		public void onCallback()
-		{
-			runOnUiThread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					Toast.makeText(getBaseContext(),
-							"Oh noes, we gots no connection!",
-							Toast.LENGTH_SHORT).show();
-				}
-			});
+			currentScenario.onNetworkNowFree();
 		}
 	};
 

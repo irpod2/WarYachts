@@ -18,6 +18,8 @@ public class Battlefield implements ITouchArea
 	protected Sprite gridSprite;
 	protected ArrayList<Yacht> yachts;
 	protected Targeter targeter;
+	protected int selectedRow;
+	protected int selectedCol;
 
 	public Battlefield()
 	{
@@ -25,6 +27,8 @@ public class Battlefield implements ITouchArea
 		yachts = new ArrayList<Yacht>();
 		shots = new Shot[GRID_SIZE][GRID_SIZE];
 		targeter = SpriteFactory.createTargeter();
+		selectedRow = 0;
+		selectedCol = 4;
 	}
 
 	public boolean addYacht(Yacht y)
@@ -48,10 +52,21 @@ public class Battlefield implements ITouchArea
 	{
 		targeter.setLocation(row, col);
 	}
+	
+	public int getSelectedRow()
+	{
+		return selectedRow;
+	}
 
+	public int getSelectedCol()
+	{
+		return selectedCol;
+	}
+	
 	public void shoot(int row, int col)
 	{
 		gridSprite.detachChild(targeter);
+		/*
 		for (Yacht y : yachts)
 		{
 			if (y.shoot(row, col))
@@ -60,7 +75,10 @@ public class Battlefield implements ITouchArea
 				return;
 			}
 		}
-		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
+		shots[row][col] = new Shot(row, col, ShotType.MISS, this);*/
+		
+		selectedRow = row;
+		selectedCol = col;
 	}
 
 	public void attachShot(Sprite shot)
@@ -115,7 +133,13 @@ public class Battlefield implements ITouchArea
 				attachTargeter(row, col);
 			else if (pSceneTouchEvent.isActionMove()
 					&& (targeter.getRow() != row || targeter.getCol() != col))
+			{
+				if(!targeter.hasParent())
+				{
+					gridSprite.attachChild(targeter);
+				}
 				setTargeter(row, col);
+			}
 			else if (pSceneTouchEvent.isActionUp())
 			{
 				if(shots[row][col] == null)
@@ -123,6 +147,10 @@ public class Battlefield implements ITouchArea
 				else
 					gridSprite.detachChild(targeter);
 			}
+		}
+		else if(targeter.hasParent())
+		{
+			gridSprite.detachChild(targeter);
 		}
 		return true;
 	}

@@ -14,7 +14,7 @@ import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Battlefield;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht.Orientation;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
-import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.OutputCommThread;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
@@ -35,6 +35,7 @@ public class GameInstanceScenario implements IScenario
 	protected ConnectionHandler btHandler;
 	protected Battlefield userBattlefield;
 	protected Battlefield enemyBattlefield;
+
 
 	public GameInstanceScenario(BaseGameActivity bga, Scene scn,
 			CallbackVoid onBackCB, ConnectionHandler conHandler)
@@ -75,15 +76,18 @@ public class GameInstanceScenario implements IScenario
 			public void onClick(ButtonSprite pButtonSprite,
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
-
-				btHandler.sendMsg("HELLO FRIEND!");
-
+				ControlMessage msg = ControlMessage.createShootMessage(
+						userBattlefield.getSelectedRow(),
+						userBattlefield.getSelectedCol());
+				button.setEnabled(false);
+				btHandler.sendMsg(msg);
 			}
 		});
 		button.setY(WarYachtsActivity.getCameraHeight()
 				- button.getHeightScaled());
 		button.setX(WarYachtsActivity.getCameraWidth() / 2.0f
 				- button.getWidthScaled() / 2.0f);
+		button.setEnabled(false);
 
 		Background bg = BackgroundFactory.createStartBackground();
 		scene.setBackground(bg);
@@ -94,13 +98,10 @@ public class GameInstanceScenario implements IScenario
 		return ready;
 	}
 
-	public void write(String msg)
+	public void onNetworkNowFree()
 	{
-		OutputCommThread t = new OutputCommThread(btHandler.getSocket(),
-				"HOW YOU DOIN?!?");
-		t.start();
+		button.setEnabled(true);
 	}
-
 
 	@Override
 	public void prepareStart()

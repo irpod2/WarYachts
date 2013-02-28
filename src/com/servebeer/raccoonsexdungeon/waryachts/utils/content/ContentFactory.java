@@ -20,8 +20,6 @@ public class ContentFactory
 
 	protected static Font deadHand;
 
-	protected static boolean LOAD_COMPLETE = false;
-
 	public static void init(BaseGameActivity bga)
 	{
 		activity = bga;
@@ -32,7 +30,6 @@ public class ContentFactory
 
 		loadContent();
 		SpriteFactory.loadContent();
-		LOAD_COMPLETE = true;
 	}
 
 	protected static void loadContent()
