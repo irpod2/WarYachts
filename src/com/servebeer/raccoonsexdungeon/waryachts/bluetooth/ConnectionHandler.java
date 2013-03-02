@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.andengine.ui.activity.BaseGameActivity;
+import org.andengine.util.call.Callback;
 
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -45,20 +46,22 @@ public class ConnectionHandler
 	private BluetoothDevice opponentDevice;
 	private ArrayList<String> discoveredDevices;
 	private BusyType busy;
-	private CallbackVoid networkNowFreeCallback;
+	private Callback<ControlMessage> messageHandlerCallback;
 	private CallbackVoid foundGameCallback;
 
-	protected InputCommThread inThread;
-	protected OutputCommThread outThread;
+	private InputCommThread inThread;
+	private OutputCommThread outThread;
+	private ArrayList<MessagePair> unackedMessages;
 
 
-	public ConnectionHandler(BaseGameActivity bga, CallbackVoid nwNowFreeCB,
-			CallbackVoid foundGameCB)
+	public ConnectionHandler(BaseGameActivity bga,
+			Callback<ControlMessage> msgHandlerCB, CallbackVoid foundGameCB)
 	{
 		activity = bga;
 		busy = BusyType.NOT_BUSY;
-		networkNowFreeCallback = nwNowFreeCB;
+		messageHandlerCallback = msgHandlerCB;
 		foundGameCallback = foundGameCB;
+		unackedMessages = new ArrayList<MessagePair>();
 	}
 
 	public BusyType getBusyType()
@@ -158,7 +161,8 @@ public class ConnectionHandler
 					Toast.makeText(activity, "Device is set",
 							Toast.LENGTH_SHORT).show();
 					foundGameCallback.onCallback();
-					ControlMessage ctrlMsg = ControlMessage.createChatMessage("I found you!");
+					ControlMessage ctrlMsg = ControlMessage
+							.createChatMessage("I found you!");
 					sendMsg(ctrlMsg);
 				}
 			});
@@ -260,7 +264,8 @@ public class ConnectionHandler
 					Toast.makeText(activity, "Device is set",
 							Toast.LENGTH_SHORT).show();
 					foundGameCallback.onCallback();
-					ControlMessage ctrlMsg = ControlMessage.createChatMessage("I found you!");
+					ControlMessage ctrlMsg = ControlMessage
+							.createChatMessage("I found you!");
 					sendMsg(ctrlMsg);
 				}
 			});
@@ -296,11 +301,11 @@ public class ConnectionHandler
 			public void run()
 			{
 				// Create Input Comm Thread
-				inThread = new InputCommThread(activity);
+				inThread = new InputCommThread(messageHandlerCallback);
 				inThread.start();
 
 				// Notify Current Scenario that it can use the network
-				networkNowFreeCallback.onCallback();
+				messageHandlerCallback.onCallback(null);
 			}
 		});
 	}
@@ -308,8 +313,91 @@ public class ConnectionHandler
 	public void sendMsg(ControlMessage ctrlMsg)
 	{
 		busy = BusyType.CONNECTING;
-		outThread = new OutputCommThread(activity, opponentDevice, ctrlMsg.getMessage());
+		outThread = new OutputCommThread(activity, opponentDevice, ctrlMsg);
 		outThread.start();
+	}
+
+	// Called when message sending fails due to inability to connect
+	public void queueMessage(final ControlMessage ctrlMsg)
+	{
+		// Always run on update thread to prevent concurrency problems
+		// (thread-safe)
+		activity.runOnUpdateThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				MessageTimer t = new MessageTimer(activity, ctrlMsg);
+				unackedMessages.add(new MessagePair(ctrlMsg, t));
+				activity.getEngine().registerUpdateHandler(t);
+			}
+		});
+	}
+
+	public void unqueueMessage(final ControlMessage ctrlMsg)
+	{
+		// Always run on update thread to prevent concurrency problems
+		// (thread-safe)
+		activity.runOnUpdateThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				final String targetString = ctrlMsg.getSanitizedMessage();
+				for (MessagePair msgPair : unackedMessages)
+				{
+					// If message is found to be unacked
+					if (targetString.equals(
+							msgPair.message.getMessage().substring(2)))
+					{
+						// Cancel the timer for the entry
+						msgPair.timer.cancel();
+						// Remove the entry from the list
+						unackedMessages.remove(msgPair);
+
+						activity.runOnUiThread(new Runnable()
+						{
+							@Override
+							public void run()
+							{
+								Toast.makeText(
+										activity,
+										"Unqueueing:(" + targetString
+												+ ")", Toast.LENGTH_SHORT)
+										.show();
+							}
+						});
+						// Stop processing (since we just screwed up the
+						// iterator by removing an entry)
+						return;
+					}
+				}
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						Toast.makeText(activity,
+								"Did not find:(" + targetString + ")",
+								Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		});
+	}
+
+	public void unqueueMessages()
+	{
+		// Always run on update thread to prevent concurrency problems
+		// (thread-safe)
+		activity.runOnUpdateThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				unackedMessages.clear();
+			}
+		});
 	}
 
 	public void reset()
@@ -356,6 +444,8 @@ public class ConnectionHandler
 			break;
 
 		}
+
+		unqueueMessages();
 
 		// Ensure the busy type is NOT_BUSY
 		busy = BusyType.NOT_BUSY;

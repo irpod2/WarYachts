@@ -4,12 +4,11 @@ package com.servebeer.raccoonsexdungeon.waryachts.bluetooth;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.andengine.ui.activity.BaseGameActivity;
+import org.andengine.util.call.Callback;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
-import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
@@ -17,7 +16,6 @@ import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.Contr
 public class InputCommThread extends Thread
 {
 	private final int MAX_BUF_SIZE = 1024;
-	private final BaseGameActivity activity;
 	private final BluetoothAdapter btAdapter;
 
 	private BluetoothServerSocket serverSocket;
@@ -25,11 +23,13 @@ public class InputCommThread extends Thread
 	private boolean invalid = false;
 
 	private String inMsg;
+	private Callback<ControlMessage> messageHandlerCallback;
 
-	public InputCommThread(BaseGameActivity bga)
+	public InputCommThread(Callback<ControlMessage> msgHandlerCB)
 	{
 		// Use a temporary object that is later assigned to serverSocket,
 		// because serverSocket is final
+		messageHandlerCallback = msgHandlerCB;
 		BluetoothServerSocket tmp = null;
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		try
@@ -43,8 +43,6 @@ public class InputCommThread extends Thread
 			invalid = true;
 		}
 		serverSocket = tmp;
-
-		activity = bga;
 
 		inMsg = null;
 	}
@@ -138,19 +136,27 @@ public class InputCommThread extends Thread
 		// Create string for message
 		inMsg = new String(buf);
 		inMsg = inMsg.substring(0, bytesRead);
-		final ControlMessage ctrl = ControlMessage.parseMessage(inMsg);
+		ControlMessage ctrl = ControlMessage.parseMessage(inMsg);
 
 		// If we've received a message
 		if (inMsg.length() != 0)
 		{
-			activity.runOnUiThread(new Runnable()
+			// Acks serve to prevent timeouts only
+			// Hits and Misses also should be treated as shot acks
+			switch(ctrl.getType())
 			{
-				@Override
-				public void run()
-				{
-					Toast.makeText(activity, ctrl.getMessage(), Toast.LENGTH_SHORT).show();
-				}
-			});
+			case ACK:
+				// ONLY prevent timeout
+				WarYachtsActivity.getConnectionHandler().unqueueMessage(ctrl);
+				break;
+			case HIT:
+			case MISS:
+				// Handle timeout AND let scenario handle message
+				WarYachtsActivity.getConnectionHandler().unqueueMessage(ctrl);
+			default:
+				// Everything else is JUST handled by scenario
+				messageHandlerCallback.onCallback(ctrl);
+			}
 		}
 
 

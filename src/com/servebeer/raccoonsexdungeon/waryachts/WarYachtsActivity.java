@@ -8,6 +8,7 @@ import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.BaseGameActivity;
+import org.andengine.util.call.Callback;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -18,6 +19,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions.ComposedTransitionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions.FadeInHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions.ITransitionHandler;
@@ -94,7 +96,7 @@ public class WarYachtsActivity extends BaseGameActivity
 		// CONTENT FACTORY INITIALIZATION
 		ContentFactory.init(this);
 
-		btHandler = new ConnectionHandler(this, networkNowFreeCallback,
+		btHandler = new ConnectionHandler(this, messageHandlerCallback,
 				prepareGameInstanceCallback);
 
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
@@ -126,11 +128,13 @@ public class WarYachtsActivity extends BaseGameActivity
 	// Connection Callbacks
 	// =================================================================
 
-	CallbackVoid networkNowFreeCallback = new CallbackVoid()
+	Callback<ControlMessage> messageHandlerCallback = new Callback<ControlMessage>()
 	{
 		@Override
-		public void onCallback()
+		public void onCallback(ControlMessage ctrlMsg)
 		{
+			if (ctrlMsg != null)
+				currentScenario.handleControlMessage(ctrlMsg);
 			currentScenario.onNetworkNowFree();
 		}
 	};
@@ -269,6 +273,9 @@ public class WarYachtsActivity extends BaseGameActivity
 	@Override
 	public void onBackPressed()
 	{
+		// Reset busy and stop performing connection activities
+		btHandler.reset();
+
 		// If the scenario doesn't handle back presses, pass it up
 		if (currentScenario == null || !currentScenario.handleBackPress())
 			super.onBackPressed();

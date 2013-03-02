@@ -6,23 +6,25 @@ import java.io.IOException;
 
 import org.andengine.ui.activity.BaseGameActivity;
 
-import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.widget.Toast;
 
+import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage.ControlType;
+
 public class OutputCommThread extends Thread
 {
 	private final BluetoothDevice btDevice;
 	private final BluetoothAdapter btAdapter;
-	private final String outMsg;
+	private final ControlMessage outMsg;
 	private BluetoothSocket outputSocket;
 	private BaseGameActivity activity;
 
 	public OutputCommThread(BaseGameActivity bga, BluetoothDevice device,
-			String msg)
+			ControlMessage msg)
 	{
 		// Use a temporary object that is later assigned to mmSocket,
 		// because mmSocket is final
@@ -78,13 +80,29 @@ public class OutputCommThread extends Thread
 			});
 		}
 
+
+		// Don't queue up acks
+		if (outMsg.getType() != ControlType.ACK)
+			WarYachtsActivity.getConnectionHandler().queueMessage(outMsg);
+		else
+			activity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(activity,
+							"Sending ack!:(" + outMsg.getMessage() + ")",
+							Toast.LENGTH_SHORT).show();
+				}
+			});
+
 		// write to socket
 		try
 		{
 			DataOutputStream outStream = new DataOutputStream(
 					outputSocket.getOutputStream());
 
-			outStream.write(outMsg.getBytes());
+			outStream.write(outMsg.getMessage().getBytes());
 
 			outStream.flush();
 
@@ -97,9 +115,9 @@ public class OutputCommThread extends Thread
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		WarYachtsActivity.getConnectionHandler().listen();
-		
+
 		return;
 	}
 

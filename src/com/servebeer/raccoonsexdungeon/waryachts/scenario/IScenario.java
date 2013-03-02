@@ -3,6 +3,8 @@ package com.servebeer.raccoonsexdungeon.waryachts.scenario;
 
 import org.andengine.entity.scene.Scene;
 
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
+
 public interface IScenario
 {
 	// Get ready to fade in
@@ -21,6 +23,8 @@ public interface IScenario
 	public Scene getScene();
 	
 	public boolean handleBackPress();
+	
+	public void handleControlMessage(final ControlMessage ctrlMsg);
 	
 	public void onNetworkNowFree();
 }

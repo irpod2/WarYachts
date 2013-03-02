@@ -10,6 +10,8 @@ import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
 import org.andengine.ui.activity.BaseGameActivity;
 
+import android.widget.Toast;
+
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Battlefield;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht.Orientation;
@@ -162,5 +164,55 @@ public class GameInstanceScenario implements IScenario
 	{
 		onBackCallback.onCallback();
 		return true;
+	}
+
+	public void handleControlMessage(final ControlMessage ctrlMsg)
+	{
+		ControlMessage respMsg = null;
+		String msgType = "E:";
+		switch (ctrlMsg.getType())
+		{
+		case CHAT:
+			msgType = "C:";
+			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
+			btHandler.sendMsg(respMsg);
+			break;
+		case HIT:
+			msgType = "H:";
+			enemyBattlefield.hit(ctrlMsg.getRow(), ctrlMsg.getCol());
+			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
+			btHandler.sendMsg(respMsg);
+			break;
+		case MISS:
+			msgType = "M:";
+			enemyBattlefield.miss(ctrlMsg.getRow(), ctrlMsg.getCol());
+			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
+			btHandler.sendMsg(respMsg);
+			break;
+		case SHOOT:
+			msgType = "S:";
+			// If hit, send hit message. Otherwise, send miss message
+			if (userBattlefield.shoot(ctrlMsg.getRow(), ctrlMsg.getCol()))
+				respMsg = ControlMessage.createHitMessage(ctrlMsg.getRow(),
+						ctrlMsg.getCol());
+			else
+				respMsg = ControlMessage.createMissMessage(ctrlMsg.getRow(),
+						ctrlMsg.getCol());
+			btHandler.sendMsg(respMsg);
+			break;
+		default:
+			msgType = "D:";
+			break;
+		}
+		final String mt = msgType;
+		activity.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Toast.makeText(activity, mt + "(" + ctrlMsg.getMessage() + ")",
+						Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
 }

@@ -8,11 +8,13 @@ import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
 import org.andengine.ui.activity.BaseGameActivity;
 
 import android.content.Intent;
+import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.PreferencesActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler.BusyType;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
 
@@ -157,4 +159,16 @@ public class StartMenuScenario implements IScenario
 	@Override
 	public void onNetworkNowFree()
 	{}
+	
+	public void handleControlMessage(final ControlMessage ctrlMsg)
+	{
+		activity.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Toast.makeText(activity, ctrlMsg.getMessage(), Toast.LENGTH_SHORT).show();
+			}
+		});
+	}
 }
