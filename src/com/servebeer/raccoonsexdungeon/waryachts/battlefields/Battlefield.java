@@ -5,30 +5,24 @@ import java.util.ArrayList;
 
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.sprite.Sprite;
-import org.andengine.input.touch.TouchEvent;
 
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 
-public class Battlefield implements ITouchArea
+public abstract class Battlefield implements ITouchArea
 {
 	public static final int GRID_SIZE = 10;
 	protected Shot[][] shots;
 	protected Sprite gridSprite;
 	protected ArrayList<Yacht> yachts;
-	protected Targeter targeter;
-	protected int selectedRow;
-	protected int selectedCol;
+	protected boolean touchedDown;
 
 	public Battlefield()
 	{
 		gridSprite = SpriteFactory.createGrid();
 		yachts = new ArrayList<Yacht>();
 		shots = new Shot[GRID_SIZE][GRID_SIZE];
-		targeter = SpriteFactory.createTargeter();
-		selectedRow = 0;
-		selectedCol = 4;
+		touchedDown = false;
 	}
 
 	public boolean addYacht(Yacht y)
@@ -41,62 +35,6 @@ public class Battlefield implements ITouchArea
 		else
 			return false;
 	}
-
-	public void attachTargeter(int row, int col)
-	{
-		targeter.setLocation(row, col);
-		gridSprite.attachChild(targeter);
-	}
-
-	public void setTargeter(int row, int col)
-	{
-		targeter.setLocation(row, col);
-		
-		selectedRow = row;
-		selectedCol = col;
-	}
-	
-	public int getSelectedRow()
-	{
-		return selectedRow;
-	}
-
-	public int getSelectedCol()
-	{
-		return selectedCol;
-	}
-	
-	// ===========================================================
-	// For when enemy shoots our battlefield
-	public boolean shoot(int row, int col)
-	{
-		gridSprite.detachChild(targeter);
-		
-		for (Yacht y : yachts)
-		{
-			if (y.shoot(row, col))
-			{
-				shots[row][col] = new Shot(row, col, ShotType.HIT, this);
-				return true;
-			}
-		}
-		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
-		return false;
-	}
-	// ===========================================================
-	
-	// ===========================================================
-	// For confirmation of hit or miss on enemy battlefield
-	public void hit(int row, int col)
-	{
-		shots[row][col] = new Shot(row, col, ShotType.HIT, this);
-	}
-	
-	public void miss(int row, int col)
-	{
-		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
-	}
-	// ===========================================================
 
 	public void attachShot(Sprite shot)
 	{
@@ -135,38 +73,5 @@ public class Battlefield implements ITouchArea
 		coords[0] = pX + gridSprite.getX() + SpriteFactory.GRID_PADDING;
 		coords[1] = pY + gridSprite.getY() + SpriteFactory.GRID_PADDING;
 		return coords;
-	}
-
-	@Override
-	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
-			float pTouchAreaLocalX, float pTouchAreaLocalY)
-	{
-
-		int row = getCellFromPosition(pTouchAreaLocalY);
-		int col = getCellFromPosition(pTouchAreaLocalX);
-		if (0 <= row && row < GRID_SIZE && 0 <= col && col < GRID_SIZE)
-		{
-			if (pSceneTouchEvent.isActionDown())
-				attachTargeter(row, col);
-			else if (pSceneTouchEvent.isActionMove()
-					&& (targeter.getRow() != row || targeter.getCol() != col))
-			{
-				if(!targeter.hasParent())
-					gridSprite.attachChild(targeter);
-				
-				setTargeter(row, col);
-			}
-			else if (pSceneTouchEvent.isActionUp())
-			{
-				setTargeter(row, col);
-				if(targeter.hasParent())
-					gridSprite.detachChild(targeter);
-			}
-		}
-		else if(targeter.hasParent())
-		{
-			gridSprite.detachChild(targeter);
-		}
-		return true;
 	}
 }

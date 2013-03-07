@@ -15,6 +15,7 @@ public class SpriteFactory extends ContentFactory
 	protected static TextureRegion hitRegion;
 	protected static TextureRegion missRegion;
 	protected static TextureRegion targeterRegion;
+	protected static TextureRegion selectedRegion;
 	protected static final float GRID_RATIO = SIZE_RATIO
 			* WarYachtsActivity.getCameraWidth() / 512;
 	public static final float GRID_PADDING = GRID_RATIO * 34.0f;
@@ -52,6 +53,14 @@ public class SpriteFactory extends ContentFactory
 				.createFromAsset(targeterAtlas, activity.getAssets(),
 						"sprites/TargetCircle.png", 0, 0);
 		targeterAtlas.load();
+
+		// Target Selected
+		BitmapTextureAtlas selectedAtlas = new BitmapTextureAtlas(
+				activity.getTextureManager(), 64, 64);
+		selectedRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(selectedAtlas, activity.getAssets(),
+						"sprites/TargetSelectedCircle.png", 0, 0);
+		selectedAtlas.load();
 		
 		YachtFactory.loadContent();
 	}
@@ -91,6 +100,14 @@ public class SpriteFactory extends ContentFactory
 		Targeter targeter = new Targeter(0, 0, 0, 0, GRID_CELL_SIZE
 				- SPRITE_PADDING, GRID_CELL_SIZE - SPRITE_PADDING,
 				targeterRegion, activity.getVertexBufferObjectManager());
+		return targeter;
+	}
+
+	public static Targeter createTargetSelector()
+	{
+		Targeter targeter = new Targeter(0, 0, 0, 0, GRID_CELL_SIZE
+				- SPRITE_PADDING, GRID_CELL_SIZE - SPRITE_PADDING,
+				selectedRegion, activity.getVertexBufferObjectManager());
 		return targeter;
 	}
 }

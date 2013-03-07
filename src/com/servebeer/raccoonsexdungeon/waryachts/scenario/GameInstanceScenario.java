@@ -4,29 +4,32 @@ package com.servebeer.raccoonsexdungeon.waryachts.scenario;
 import java.util.ArrayList;
 
 import org.andengine.entity.Entity;
+import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.ui.activity.BaseGameActivity;
 
 import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Battlefield;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.EnemyBattlefield;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.UserBattlefield;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht.Orientation;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
+import com.servebeer.raccoonsexdungeon.waryachts.handlers.BattlefieldSwipeHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.YachtFactory;
 
-public class GameInstanceScenario implements IScenario
+public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 {
 	protected final int USER_FIELD = 0;
-	protected final int WAR_FIELD = 1;
-	protected final int CHAT_FIELD = 2;
+	protected final int ENEMY_FIELD = 1;
 
 	protected BaseGameActivity activity;
 	protected Scene scene;
@@ -35,8 +38,10 @@ public class GameInstanceScenario implements IScenario
 	protected ButtonSprite button;
 	protected boolean ready;
 	protected ConnectionHandler btHandler;
-	protected Battlefield userBattlefield;
-	protected Battlefield enemyBattlefield;
+	protected UserBattlefield userBattlefield;
+	protected EnemyBattlefield enemyBattlefield;
+	protected BattlefieldSwipeHandler swipeHandler;
+	private float prevX;
 
 
 	public GameInstanceScenario(BaseGameActivity bga, Scene scn,
@@ -47,8 +52,8 @@ public class GameInstanceScenario implements IScenario
 		onBackCallback = onBackCB;
 		ready = false;
 		btHandler = conHandler;
-		userBattlefield = new Battlefield();
-		enemyBattlefield = new Battlefield();
+		userBattlefield = new UserBattlefield();
+		enemyBattlefield = new EnemyBattlefield();
 		userBattlefield.addYacht(YachtFactory.createSubYacht(3, 4,
 				Orientation.HORIZONTAL));
 		userBattlefield.addYacht(YachtFactory.createWarYacht(6, 5,
@@ -66,11 +71,8 @@ public class GameInstanceScenario implements IScenario
 		layers.add(userField);
 		Entity warField = new Entity(WarYachtsActivity.getCameraWidth(), 0);
 		layers.add(warField);
-		Entity chatField = new Entity(WarYachtsActivity.getCameraWidth() * 2, 0);
-		layers.add(chatField);
 		scene.attachChild(layers.get(USER_FIELD));
-		scene.attachChild(layers.get(WAR_FIELD));
-		scene.attachChild(layers.get(CHAT_FIELD));
+		scene.attachChild(layers.get(ENEMY_FIELD));
 
 		button = ButtonFactory.createButton(new OnClickListener()
 		{
@@ -79,8 +81,8 @@ public class GameInstanceScenario implements IScenario
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
 				ControlMessage msg = ControlMessage.createShootMessage(
-						userBattlefield.getSelectedRow(),
-						userBattlefield.getSelectedCol());
+						enemyBattlefield.getSelectedRow(),
+						enemyBattlefield.getSelectedCol());
 				button.setEnabled(false);
 				btHandler.sendMsg(msg);
 			}
@@ -92,6 +94,7 @@ public class GameInstanceScenario implements IScenario
 		button.setEnabled(false);
 
 		Background bg = BackgroundFactory.createStartBackground();
+		swipeHandler = new BattlefieldSwipeHandler(layers.get(0), layers.get(1));
 		scene.setBackground(bg);
 	}
 
@@ -109,11 +112,11 @@ public class GameInstanceScenario implements IScenario
 	public void prepareStart()
 	{
 		// User Battlefield
-		layers.get(USER_FIELD).attachChild(button);
 		layers.get(USER_FIELD).attachChild(userBattlefield.getSprite());
 
 		// War Battlefield
-		layers.get(WAR_FIELD).attachChild(enemyBattlefield.getSprite());
+		layers.get(ENEMY_FIELD).attachChild(button);
+		layers.get(ENEMY_FIELD).attachChild(enemyBattlefield.getSprite());
 
 		// Chat (no chat stuff now)
 	}
@@ -124,6 +127,9 @@ public class GameInstanceScenario implements IScenario
 		// Don't want the button clickable til' we're all the way in
 		scene.registerTouchArea(button);
 		scene.registerTouchArea(userBattlefield);
+		scene.registerTouchArea(enemyBattlefield);
+		scene.setOnSceneTouchListener(this);
+		scene.registerUpdateHandler(swipeHandler);
 		ready = true;
 	}
 
@@ -132,6 +138,8 @@ public class GameInstanceScenario implements IScenario
 	{
 		scene.unregisterTouchArea(button);
 		scene.unregisterTouchArea(userBattlefield);
+		scene.unregisterTouchArea(enemyBattlefield);
+		scene.unregisterUpdateHandler(swipeHandler);
 	}
 
 	@Override
@@ -214,5 +222,26 @@ public class GameInstanceScenario implements IScenario
 						Toast.LENGTH_SHORT).show();
 			}
 		});
+	}
+
+	@Override
+	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent)
+	{
+		if(pSceneTouchEvent.isActionDown())
+		{
+			prevX = pSceneTouchEvent.getX();
+			swipeHandler.setEnabled(false);
+		}
+		else if(pSceneTouchEvent.isActionMove())
+		{
+			swipeHandler.moveByOffset(pSceneTouchEvent.getX() - prevX);
+			prevX = pSceneTouchEvent.getX();
+		}
+		else if(pSceneTouchEvent.isActionUp())
+		{
+			swipeHandler.moveByOffset(pSceneTouchEvent.getX() - prevX);
+			swipeHandler.setEnabled(true);
+		}
+		return true;
 	}
 }
