@@ -123,13 +123,13 @@ public class YachtFactory extends SpriteFactory
 				activity.getVertexBufferObjectManager());
 		yachtSprite.setScaleCenter(0, 0);
 		yachtSprite.setScale(GRID_CELL_SIZE / yachtSprite.getHeight());
+		yachtSprite.setRotationCenter(0, yachtSprite.getHeightScaled());
 		switch (or)
 		{
 		case HORIZONTAL:
 			break;
 		case VERTICAL:
 			// Rotate from lower left-corner as anchor point
-			yachtSprite.setRotationCenter(0, yachtSprite.getHeightScaled());
 			yachtSprite.setRotation(90.0f);
 			// Sprite appears displaced vertically by 1 row, so counter this
 			// by adding 1 row

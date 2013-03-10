@@ -146,9 +146,6 @@ public class InputCommThread extends Thread
 			switch(ctrl.getType())
 			{
 			case ACK:
-				// ONLY prevent timeout
-				WarYachtsActivity.getConnectionHandler().unqueueMessage(ctrl);
-				break;
 			case HIT:
 			case MISS:
 				// Handle timeout AND let scenario handle message

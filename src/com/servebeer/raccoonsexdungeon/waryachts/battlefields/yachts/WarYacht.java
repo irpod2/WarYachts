@@ -9,6 +9,6 @@ public class WarYacht extends Yacht
 
 	public WarYacht(int r, int c, Orientation o, Sprite sprite)
 	{
-		super(r, c, o, UNITS, sprite);
+		super("War\nYacht", r, c, o, UNITS, sprite);
 	}
 }

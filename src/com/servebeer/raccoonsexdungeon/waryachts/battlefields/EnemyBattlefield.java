@@ -1,11 +1,12 @@
 package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
+import org.andengine.entity.scene.ITouchArea;
 import org.andengine.input.touch.TouchEvent;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 
-public class EnemyBattlefield extends Battlefield
+public class EnemyBattlefield extends Battlefield implements ITouchArea
 {
 	protected Targeter targeter;
 	protected Targeter selectedLocation;
@@ -61,6 +62,31 @@ public class EnemyBattlefield extends Battlefield
 
 	// ===========================================================
 
+
+	@Override
+	public boolean contains(float pX, float pY)
+	{
+		return gridSprite.contains(pX, pY);
+	}
+
+	@Override
+	public float[] convertSceneToLocalCoordinates(float pX, float pY)
+	{
+		float[] coords = new float[2];
+		coords[0] = pX - gridSprite.getX() - SpriteFactory.GRID_PADDING;
+		coords[1] = pY - gridSprite.getY() - SpriteFactory.GRID_PADDING;
+		return coords;
+	}
+
+	@Override
+	public float[] convertLocalToSceneCoordinates(float pX, float pY)
+	{
+		float[] coords = new float[2];
+		coords[0] = pX + gridSprite.getX() + SpriteFactory.GRID_PADDING;
+		coords[1] = pY + gridSprite.getY() + SpriteFactory.GRID_PADDING;
+		return coords;
+	}
+	
 	@Override
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
 			float pTouchAreaLocalX, float pTouchAreaLocalY)

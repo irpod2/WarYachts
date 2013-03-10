@@ -16,15 +16,14 @@ import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.EnemyBattlefield;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.PlacementMenu;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.UserBattlefield;
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht.Orientation;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.BattlefieldSwipeHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
-import com.servebeer.raccoonsexdungeon.waryachts.utils.content.YachtFactory;
 
 public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 {
@@ -37,33 +36,26 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	protected CallbackVoid onBackCallback;
 	protected ButtonSprite button;
 	protected boolean ready;
+	protected boolean hosting;
+	protected boolean myTurn;
 	protected ConnectionHandler btHandler;
 	protected UserBattlefield userBattlefield;
 	protected EnemyBattlefield enemyBattlefield;
 	protected BattlefieldSwipeHandler swipeHandler;
+	protected PlacementMenu placementMenu;
 	private float prevX;
 
 
 	public GameInstanceScenario(BaseGameActivity bga, Scene scn,
-			CallbackVoid onBackCB, ConnectionHandler conHandler)
+			CallbackVoid onBackCB, ConnectionHandler conHandler, boolean host)
 	{
 		activity = bga;
 		scene = scn;
 		onBackCallback = onBackCB;
 		ready = false;
+		myTurn = host;
+		hosting = host;
 		btHandler = conHandler;
-		userBattlefield = new UserBattlefield();
-		enemyBattlefield = new EnemyBattlefield();
-		userBattlefield.addYacht(YachtFactory.createSubYacht(3, 4,
-				Orientation.HORIZONTAL));
-		userBattlefield.addYacht(YachtFactory.createWarYacht(6, 5,
-				Orientation.VERTICAL));
-		userBattlefield.addYacht(YachtFactory.createDestroyerYacht(0, 0,
-				Orientation.HORIZONTAL));
-		userBattlefield.addYacht(YachtFactory.createCarrierYacht(1, 2,
-				Orientation.HORIZONTAL));
-		userBattlefield.addYacht(YachtFactory.createSkunkerYacht(2, 4,
-				Orientation.HORIZONTAL));
 
 		// Create layers for scene and attach them
 		layers = new ArrayList<Entity>();
@@ -74,17 +66,26 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 		scene.attachChild(layers.get(USER_FIELD));
 		scene.attachChild(layers.get(ENEMY_FIELD));
 
+		userBattlefield = new UserBattlefield();
+		enemyBattlefield = new EnemyBattlefield();
+		placementMenu = new PlacementMenu(layers.get(USER_FIELD),
+				userBattlefield, onShipsPlacedCallback);
+
 		button = ButtonFactory.createButton(new OnClickListener()
 		{
 			@Override
 			public void onClick(ButtonSprite pButtonSprite,
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
-				ControlMessage msg = ControlMessage.createShootMessage(
-						enemyBattlefield.getSelectedRow(),
-						enemyBattlefield.getSelectedCol());
-				button.setEnabled(false);
-				btHandler.sendMsg(msg);
+				if (myTurn)
+				{
+					ControlMessage msg = ControlMessage.createShootMessage(
+							enemyBattlefield.getSelectedRow(),
+							enemyBattlefield.getSelectedCol());
+					myTurn = false;
+					button.setEnabled(false);
+					btHandler.sendMsg(msg);
+				}
 			}
 		});
 		button.setY(WarYachtsActivity.getCameraHeight()
@@ -105,7 +106,8 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 
 	public void onNetworkNowFree()
 	{
-		button.setEnabled(true);
+
+		// button.setEnabled(true);
 	}
 
 	@Override
@@ -113,6 +115,7 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	{
 		// User Battlefield
 		layers.get(USER_FIELD).attachChild(userBattlefield.getSprite());
+		placementMenu.attachSprites();
 
 		// War Battlefield
 		layers.get(ENEMY_FIELD).attachChild(button);
@@ -126,18 +129,38 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	{
 		// Don't want the button clickable til' we're all the way in
 		scene.registerTouchArea(button);
-		scene.registerTouchArea(userBattlefield);
-		scene.registerTouchArea(enemyBattlefield);
-		scene.setOnSceneTouchListener(this);
-		scene.registerUpdateHandler(swipeHandler);
+		placementMenu.registerButton(scene);
+		scene.setOnSceneTouchListener(placementMenu);
 		ready = true;
 	}
+
+	private CallbackVoid onShipsPlacedCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+			scene.registerTouchArea(enemyBattlefield);
+			scene.setOnSceneTouchListener(GameInstanceScenario.this);
+			scene.registerUpdateHandler(swipeHandler);
+			if (!hosting)
+			{
+				activity.runOnUpdateThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						btHandler.sendMsg(ControlMessage.createReadyMessage());
+					}
+				});
+			}
+		}
+	};
 
 	@Override
 	public void prepareEnd()
 	{
+		scene.setOnSceneTouchListener(null);
 		scene.unregisterTouchArea(button);
-		scene.unregisterTouchArea(userBattlefield);
 		scene.unregisterTouchArea(enemyBattlefield);
 		scene.unregisterUpdateHandler(swipeHandler);
 	}
@@ -177,28 +200,24 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	public void handleControlMessage(final ControlMessage ctrlMsg)
 	{
 		ControlMessage respMsg = null;
-		String msgType = "E:";
 		switch (ctrlMsg.getType())
 		{
-		case CHAT:
-			msgType = "C:";
+		case READY:
 			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
 			btHandler.sendMsg(respMsg);
+			button.setEnabled(myTurn);
 			break;
 		case HIT:
-			msgType = "H:";
 			enemyBattlefield.hit(ctrlMsg.getRow(), ctrlMsg.getCol());
 			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
 			btHandler.sendMsg(respMsg);
 			break;
 		case MISS:
-			msgType = "M:";
 			enemyBattlefield.miss(ctrlMsg.getRow(), ctrlMsg.getCol());
 			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
 			btHandler.sendMsg(respMsg);
 			break;
 		case SHOOT:
-			msgType = "S:";
 			// If hit, send hit message. Otherwise, send miss message
 			if (userBattlefield.shoot(ctrlMsg.getRow(), ctrlMsg.getCol()))
 				respMsg = ControlMessage.createHitMessage(ctrlMsg.getRow(),
@@ -208,17 +227,26 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 						ctrlMsg.getCol());
 			btHandler.sendMsg(respMsg);
 			break;
+		case ACK:
+			char firstChar = ctrlMsg.getMessage().charAt(2);
+			if (firstChar == 'M' || firstChar == 'H')
+			{
+				myTurn = true;
+				button.setEnabled(true);
+			}
+			/*
+			 * else if(firstChar == 'R') { myTurn = false; }
+			 */
+			break;
 		default:
-			msgType = "D:";
 			break;
 		}
-		final String mt = msgType;
 		activity.runOnUiThread(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				Toast.makeText(activity, mt + "(" + ctrlMsg.getMessage() + ")",
+				Toast.makeText(activity, "(" + ctrlMsg.getMessage() + ")",
 						Toast.LENGTH_SHORT).show();
 			}
 		});
@@ -227,17 +255,17 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent)
 	{
-		if(pSceneTouchEvent.isActionDown())
+		if (pSceneTouchEvent.isActionDown())
 		{
 			prevX = pSceneTouchEvent.getX();
 			swipeHandler.setEnabled(false);
 		}
-		else if(pSceneTouchEvent.isActionMove())
+		else if (pSceneTouchEvent.isActionMove())
 		{
 			swipeHandler.moveByOffset(pSceneTouchEvent.getX() - prevX);
 			prevX = pSceneTouchEvent.getX();
 		}
-		else if(pSceneTouchEvent.isActionUp())
+		else if (pSceneTouchEvent.isActionUp())
 		{
 			swipeHandler.moveByOffset(pSceneTouchEvent.getX() - prevX);
 			swipeHandler.setEnabled(true);

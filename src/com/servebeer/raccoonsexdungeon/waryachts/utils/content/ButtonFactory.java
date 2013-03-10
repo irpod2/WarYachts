@@ -12,14 +12,16 @@ import org.andengine.util.color.Color;
 public class ButtonFactory extends ContentFactory
 {
 	protected static final int NUM_MENU_BUTTONS = 5;
-	
+	protected static final float MENU_BUTTON_HEIGHT = 100.0f * SIZE_RATIO;
+
+
 	public static ButtonSprite createButton(OnClickListener listener)
 	{
 		BitmapTextureAtlas buttonAtlas = new BitmapTextureAtlas(
-				activity.getTextureManager(), 256, 256);
+				activity.getTextureManager(), 512, 512);
 		TiledTextureRegion buttonRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(buttonAtlas, activity,
-						"sprites/WarYachtsButton.png", 0, 0, 1, 4);
+						"sprites/Button.png", 0, 0, 1, 3);
 		buttonAtlas.load();
 		ButtonSprite buttonSprite = new ButtonSprite(0, 0,
 				buttonRegion.getTextureRegion(0),
@@ -31,8 +33,38 @@ public class ButtonFactory extends ContentFactory
 
 	public static void centerTextOnButton(Text t, ButtonSprite b)
 	{
-		t.setX(b.getWidthScaled() / 2.0f - t.getWidthScaled() / 2.0f);
-		t.setY(b.getHeightScaled() / 2.0f - t.getHeightScaled() / 2.0f);
+		b.setScaleX((t.getWidthScaled() + 40.0f) / b.getWidthScaled());
+		t.setScaleX(t.getScaleX() / b.getScaleX());
+		t.setScaleY(t.getScaleY() / b.getScaleY());
+		t.setX(b.getWidth() / 2.0f - t.getWidthScaled() / 2.0f);
+		t.setY(b.getHeight() / 2.0f - t.getHeightScaled() / 2.0f);
+	}
+
+	public static ButtonSprite createReadyButton(float height,
+			OnClickListener listener)
+	{
+		// Create a basic button
+		ButtonSprite readyButton = createButton(listener);
+
+		// Scale it like a ready button (vertically)
+		readyButton.setScaleCenter(0, 0);
+		readyButton.setScaleY(height / readyButton.getHeightScaled());
+
+		// Create button text
+		Text readyText = TextFactory.createSimpleText("Ready");
+		centerTextOnButton(readyText, readyButton);
+		readyText.setColor(Color.BLACK);
+
+		// Set button on bottom of screen
+		readyButton.setY(cameraHeight - readyButton.getHeightScaled());
+
+		// Center the button on the screen horizontally
+		readyButton.setX(cameraWidth / 2.0f - readyButton.getWidthScaled()
+				/ 2.0f);
+
+		// Attach text and return button
+		readyButton.attachChild(readyText);
+		return readyButton;
 	}
 
 	public static ButtonSprite createMenuButton(String name, int divNo,
@@ -41,19 +73,23 @@ public class ButtonFactory extends ContentFactory
 		// Create a basic button
 		ButtonSprite menuButton = createButton(listener);
 
-		// Center the button on the screen horizontally
-		menuButton
-				.setX(cameraWidth / 2.0f - menuButton.getWidthScaled() / 2.0f);
-
-		// Set button to height according to which division of the screen it
-		// should be in
-		menuButton.setY(divNo * (float)cameraHeight / NUM_MENU_BUTTONS
-				- menuButton.getHeightScaled() / 2.0f);
+		// Scale it like a menu button (vertically)
+		menuButton.setScaleCenter(0, 0);
+		menuButton.setScaleY(MENU_BUTTON_HEIGHT / menuButton.getHeightScaled());
 
 		// Create button text
 		Text menuText = TextFactory.createSimpleText(name);
 		centerTextOnButton(menuText, menuButton);
 		menuText.setColor(Color.BLACK);
+
+		// Set button to height according to which division of the screen it
+		// should be in
+		menuButton.setY(divNo * (float) cameraHeight / NUM_MENU_BUTTONS
+				- menuButton.getHeightScaled() / 2.0f);
+
+		// Center the button on the screen horizontally
+		menuButton
+				.setX(cameraWidth / 2.0f - menuButton.getWidthScaled() / 2.0f);
 
 		// Attach text and return button
 		menuButton.attachChild(menuText);

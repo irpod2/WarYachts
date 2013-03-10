@@ -3,6 +3,7 @@ package com.servebeer.raccoonsexdungeon.waryachts.utils.content;
 
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.color.Color;
 
@@ -35,8 +36,13 @@ public class ContentFactory
 	protected static void loadContent()
 	{
 		deadHand = FontFactory.createFromAsset(activity.getFontManager(),
-				activity.getTextureManager(), 256, 256, activity.getAssets(),
+				activity.getTextureManager(), 512, 512, activity.getAssets(),
 				"TMDeadhand.ttf", FONT_SIZE, true, Color.WHITE_ARGB_PACKED_INT);
 		deadHand.load();
+	}
+
+	public static VertexBufferObjectManager getVertexBufferObjectManager()
+	{
+		return activity.getVertexBufferObjectManager();
 	}
 }

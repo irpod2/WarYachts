@@ -9,6 +9,6 @@ public class SubYacht extends Yacht
 
 	public SubYacht(int r, int c, Orientation o, Sprite sprite)
 	{
-		super(r, c, o, UNITS, sprite);
+		super("The\nPoseidon", r, c, o, UNITS, sprite);
 	}
 }

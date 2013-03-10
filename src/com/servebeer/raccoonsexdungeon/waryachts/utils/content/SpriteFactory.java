@@ -76,6 +76,11 @@ public class SpriteFactory extends ContentFactory
 	{
 		return GRID_PADDING + GRID_CELL_SIZE * index;
 	}
+	
+	public static float getCellSpacing()
+	{
+		return GRID_CELL_SIZE;
+	}
 
 	public static Sprite createHitSprite(int row, int col)
 	{

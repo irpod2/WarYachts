@@ -10,7 +10,7 @@ public class ControlMessage
 
 	public enum ControlType
 	{
-		CHAT, SHOOT, HIT, MISS, ACK, ERROR
+		SHOOT, HIT, MISS, ACK, READY, ERROR
 	}
 
 
@@ -69,7 +69,7 @@ public class ControlMessage
 		ControlMessage ctrlMsg = new ControlMessage();
 		String firstTwo = ctrlStr.substring(0, 2);
 		String theRest = ctrlStr.substring(2);
-		ctrlMsg.setMessage(theRest);
+		ctrlMsg.setMessage(ctrlStr);
 		// ACK message
 		if (firstTwo.equals("A:"))
 		{
@@ -95,10 +95,10 @@ public class ControlMessage
 		// Hit message
 		else if (firstTwo.equals("H:"))
 		{
-			if (ctrlStr.length() == 4)
+			if (ctrlStr.length() == 6)
 			{
-				int col = theRest.charAt(0) - '0';
-				int row = theRest.charAt(1) - '0';
+				int col = theRest.charAt(2) - '0';
+				int row = theRest.charAt(3) - '0';
 				ctrlMsg.setCol(col);
 				ctrlMsg.setRow(row);
 				ctrlMsg.setType(ControlType.HIT);
@@ -106,16 +106,16 @@ public class ControlMessage
 			// ERROR
 			else
 			{
-				ctrlMsg.setMessage("Message received was not of proper length");
+				ctrlMsg.setMessage("E:Message received was not of proper length");
 			}
 		}
 		// Miss message
 		else if (firstTwo.equals("M:"))
 		{
-			if (ctrlStr.length() == 4)
+			if (ctrlStr.length() == 6)
 			{
-				int col = theRest.charAt(0) - '0';
-				int row = theRest.charAt(1) - '0';
+				int col = theRest.charAt(2) - '0';
+				int row = theRest.charAt(3) - '0';
 				ctrlMsg.setCol(col);
 				ctrlMsg.setRow(row);
 				ctrlMsg.setType(ControlType.MISS);
@@ -123,17 +123,17 @@ public class ControlMessage
 			// ERROR
 			else
 			{
-				ctrlMsg.setMessage("Message received was not of proper length");
+				ctrlMsg.setMessage("E:Message received was not of proper length");
 			}
 		}
-		// Chat Message
-		else if (firstTwo.equals("C:"))
+		// Ready Message
+		else if (firstTwo.equals("R:"))
 		{
-			ctrlMsg.setType(ControlType.CHAT);
+			ctrlMsg.setType(ControlType.READY);
 		}
 		else
 		{
-			ctrlMsg.setMessage("Message did not match any known pattern");
+			ctrlMsg.setMessage("E:Message did not match any known pattern");
 		}
 		return ctrlMsg;
 	}
@@ -148,21 +148,21 @@ public class ControlMessage
 	public static ControlMessage createHitMessage(int row, int col)
 	{
 		ControlMessage ctrlMsg = new ControlMessage(ControlType.HIT);
-		ctrlMsg.setMessage("H:" + String.valueOf(col) + String.valueOf(row));
+		ctrlMsg.setMessage("H:S:" + String.valueOf(col) + String.valueOf(row));
 		return ctrlMsg;
 	}
 
 	public static ControlMessage createMissMessage(int row, int col)
 	{
 		ControlMessage ctrlMsg = new ControlMessage(ControlType.MISS);
-		ctrlMsg.setMessage("M:" + String.valueOf(col) + String.valueOf(row));
+		ctrlMsg.setMessage("M:S:" + String.valueOf(col) + String.valueOf(row));
 		return ctrlMsg;
 	}
 
-	public static ControlMessage createChatMessage(String message)
+	public static ControlMessage createReadyMessage()
 	{
-		ControlMessage ctrlMsg = new ControlMessage(ControlType.CHAT);
-		ctrlMsg.setMessage("C:" + message);
+		ControlMessage ctrlMsg = new ControlMessage(ControlType.READY);
+		ctrlMsg.setMessage("R:");
 		return ctrlMsg;
 	}
 
@@ -172,25 +172,13 @@ public class ControlMessage
 		ctrlMsg.setMessage("A:" + prevMessage);
 		return ctrlMsg;
 	}
-	
+
 	public String getSanitizedMessage()
 	{
-		if(messageString.charAt(1) == ':')
-		{	
-			return messageString.substring(2);	
+		if (messageString.charAt(1) == ':')
+		{
+			return messageString.substring(2);
 		}
-		
 		return messageString;
-			
 	}
-	/*
-	 * public static char getColCoord(int col) { return (char) (col + 'A'); }
-	 * 
-	 * public static int getRowCoord(int row) { return row + 1; }
-	 * 
-	 * public static int getColIndex(char col) { return (int) (col - 'A'); }
-	 * 
-	 * public static int getRowIndex(String row) { return Integer.parseInt(row)
-	 * - 1; }
-	 */
 }

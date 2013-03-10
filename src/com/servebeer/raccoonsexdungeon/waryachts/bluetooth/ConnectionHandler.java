@@ -161,9 +161,6 @@ public class ConnectionHandler
 					Toast.makeText(activity, "Device is set",
 							Toast.LENGTH_SHORT).show();
 					foundGameCallback.onCallback();
-					ControlMessage ctrlMsg = ControlMessage
-							.createChatMessage("I found you!");
-					sendMsg(ctrlMsg);
 				}
 			});
 
@@ -264,9 +261,6 @@ public class ConnectionHandler
 					Toast.makeText(activity, "Device is set",
 							Toast.LENGTH_SHORT).show();
 					foundGameCallback.onCallback();
-					ControlMessage ctrlMsg = ControlMessage
-							.createChatMessage("I found you!");
-					sendMsg(ctrlMsg);
 				}
 			});
 
@@ -347,8 +341,7 @@ public class ConnectionHandler
 				for (MessagePair msgPair : unackedMessages)
 				{
 					// If message is found to be unacked
-					if (targetString.equals(
-							msgPair.message.getMessage().substring(2)))
+					if (targetString.equals(msgPair.message.getMessage()))
 					{
 						// Cancel the timer for the entry
 						msgPair.timer.cancel();
@@ -360,11 +353,9 @@ public class ConnectionHandler
 							@Override
 							public void run()
 							{
-								Toast.makeText(
-										activity,
-										"Unqueueing:(" + targetString
-												+ ")", Toast.LENGTH_SHORT)
-										.show();
+								Toast.makeText(activity,
+										"Unqueueing:(" + targetString + ")",
+										Toast.LENGTH_SHORT).show();
 							}
 						});
 						// Stop processing (since we just screwed up the

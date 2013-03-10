@@ -97,7 +97,7 @@ public class WarYachtsActivity extends BaseGameActivity
 		ContentFactory.init(this);
 
 		btHandler = new ConnectionHandler(this, messageHandlerCallback,
-				prepareGameInstanceCallback);
+				prepareClientGameInstanceCallback);
 
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
 	}
@@ -160,14 +160,27 @@ public class WarYachtsActivity extends BaseGameActivity
 			currentScenario = nextScenario;
 		}
 	};
-
-	protected CallbackVoid prepareGameInstanceCallback = new CallbackVoid()
+	
+	protected CallbackVoid prepareClientGameInstanceCallback = new CallbackVoid()
 	{
 		@Override
 		public void onCallback()
 		{
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback, btHandler);
+					gameInstanceScene, prepareStartMenuCallback, btHandler, false);
+			transitionHandler = new ComposedTransitionHandler(
+					WarYachtsActivity.this, camera, currentScenario,
+					nextScenario, switchScenarioCallback);
+		}
+	};
+
+	protected CallbackVoid prepareHostGameInstanceCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
+					gameInstanceScene, prepareStartMenuCallback, btHandler, true);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
 					nextScenario, switchScenarioCallback);
@@ -226,7 +239,7 @@ public class WarYachtsActivity extends BaseGameActivity
 				// Set up connection listener in ConnectionHandler
 				btHandler.onDiscoveryEnabled();
 				// Create game for when a connection is established
-				prepareGameInstanceCallback.onCallback();
+				prepareHostGameInstanceCallback.onCallback();
 			}
 			else
 			{

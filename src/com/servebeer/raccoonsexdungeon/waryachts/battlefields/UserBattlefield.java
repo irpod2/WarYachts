@@ -1,6 +1,5 @@
-package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
-import org.andengine.input.touch.TouchEvent;
+package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
@@ -27,20 +26,24 @@ public class UserBattlefield extends Battlefield
 		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
 		return false;
 	}
+
 	// ===========================================================
 
-	@Override
-	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
-			float pTouchAreaLocalX, float pTouchAreaLocalY)
+	public Yacht getYacht(float pX, float pY)
 	{
-		if (pSceneTouchEvent.isActionDown())
-			touchedDown = true;
-		
-		if (!touchedDown)
-			return false;
-		
-		if(pSceneTouchEvent.isActionUp())
-			touchedDown = false;
-		return true;
+		for (Yacht y : yachts)
+		{
+			if (y.getSprite().contains(pX, pY))
+			{
+				yachts.remove(y);
+				return y;
+			}
+		}
+		return null;
+	}
+
+	public boolean contains(float pX, float pY)
+	{
+		return gridSprite.contains(pX, pY);
 	}
 }

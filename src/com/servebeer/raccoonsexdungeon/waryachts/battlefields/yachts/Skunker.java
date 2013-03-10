@@ -1,3 +1,4 @@
+
 package com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts;
 
 import org.andengine.entity.sprite.Sprite;
@@ -8,6 +9,6 @@ public class Skunker extends Yacht
 
 	public Skunker(int r, int c, Orientation o, Sprite sprite)
 	{
-		super(r, c, o, UNITS, sprite);
+		super("The\nSkunker", r, c, o, UNITS, sprite);
 	}
 }
