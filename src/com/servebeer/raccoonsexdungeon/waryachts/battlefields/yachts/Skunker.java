@@ -6,9 +6,11 @@ import org.andengine.entity.sprite.Sprite;
 public class Skunker extends Yacht
 {
 	public final static int UNITS = 2;
-
-	public Skunker(int r, int c, Orientation o, Sprite sprite)
+	public final static String NAME = "The\nSkunker";
+	
+	
+	public Skunker(YachtInfo yi, Sprite sprite)
 	{
-		super("The\nSkunker", r, c, o, UNITS, sprite);
+		super(yi, sprite);
 	}
 }

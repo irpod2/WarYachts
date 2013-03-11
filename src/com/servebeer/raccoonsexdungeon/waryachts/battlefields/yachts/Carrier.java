@@ -6,9 +6,10 @@ import org.andengine.entity.sprite.Sprite;
 public class Carrier extends Yacht
 {
 	public final static int UNITS = 5;
+	public final static String NAME = "Helicopter\nCarrier";
 
-	public Carrier(int r, int c, Orientation o, Sprite sprite)
+	public Carrier(YachtInfo yi, Sprite sprite)
 	{
-		super("Helicopter\nCarrier", r, c, o, UNITS, sprite);
+		super(yi, sprite);
 	}
 }

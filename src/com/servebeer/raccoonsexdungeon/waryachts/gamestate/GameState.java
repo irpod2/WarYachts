@@ -7,22 +7,23 @@ import java.util.ArrayList;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Battlefield;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
 
 
 public class GameState implements Serializable
 {
 
 	/**
-	 * Generated
+	 * 
 	 */
-	private static final long serialVersionUID = -5076861011317608345L;
+	private static final long serialVersionUID = 6776457514302791105L;
+
 
 	protected Boolean myTurn;
 	protected String oppMac;
 
-	protected ArrayList<Yacht> myYachts;
-	protected ArrayList<Yacht> oppYachts;
+	protected ArrayList<YachtInfo> myYachts;
+	protected ArrayList<YachtInfo> oppYachts;
 
 
 	protected ShotType[][] myShots;
@@ -33,8 +34,8 @@ public class GameState implements Serializable
 	{
 		myTurn = turn;
 
-		myYachts = new ArrayList<Yacht>(Battlefield.NUM_YACHTS);
-		oppYachts = new ArrayList<Yacht>(Battlefield.NUM_YACHTS);
+		myYachts = new ArrayList<YachtInfo>(Battlefield.NUM_YACHTS);
+		oppYachts = new ArrayList<YachtInfo>(Battlefield.NUM_YACHTS);
 		
 		myShots = new ShotType[Battlefield.GRID_SIZE][Battlefield.GRID_SIZE];
 		oppShots = new ShotType[Battlefield.GRID_SIZE][Battlefield.GRID_SIZE];
@@ -62,13 +63,14 @@ public class GameState implements Serializable
 	{
 		oppMac = mac;
 	}
-
-	public void addMyYacht(Yacht yacht)
+	
+	public void updateMyYachts(ArrayList<YachtInfo> y)
 	{
-		myYachts.add(yacht);
+		myYachts = y;
 	}
 
-	public void addOppYacht(Yacht yacht)
+
+	public void addOppYacht(YachtInfo yacht)
 	{
 		oppYachts.add(yacht);
 	}
@@ -94,12 +96,12 @@ public class GameState implements Serializable
 		return oppMac;
 	}
 	
-	public ArrayList<Yacht> getMyYachts()
+	public ArrayList<YachtInfo> getMyYachts()
 	{
 		return myYachts;
 	}
 	
-	public ArrayList<Yacht> getOppYachts()
+	public ArrayList<YachtInfo> getOppYachts()
 	{
 		return oppYachts;
 	}
@@ -113,5 +115,6 @@ public class GameState implements Serializable
 	{
 		return oppShots;
 	}
+
 
 }

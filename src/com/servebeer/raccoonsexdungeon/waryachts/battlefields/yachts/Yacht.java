@@ -4,32 +4,21 @@ package com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.sprite.Sprite;
 
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.Orientation;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.YachtType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ContentFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.YachtFactory;
 
 public abstract class Yacht
 {
 	protected Sprite yachtSprite;
-	protected String name;
-	protected int units;
-	protected int row;
-	protected int col;
-	protected Orientation orientation;
+	protected YachtInfo yachtInfo;
 	protected Rectangle badPlacementRectangle;
 
-	public enum Orientation
-	{
-		HORIZONTAL, VERTICAL
-	}
 
-	public Yacht(String yachtName, int r, int c, Orientation o, int u,
-			Sprite sprite)
+	public Yacht(YachtInfo yi, Sprite sprite)
 	{
-		name = yachtName;
-		row = r;
-		col = c;
-		orientation = o;
-		units = u;
+		yachtInfo = yi;
 		yachtSprite = sprite;
 	}
 
@@ -55,104 +44,114 @@ public abstract class Yacht
 			yachtSprite.detachChild(badPlacementRectangle);
 		}
 	}
+	
+	public YachtInfo getInfo()
+	{
+		return yachtInfo;
+	}
+	
+	public YachtType getType()
+	{
+		return yachtInfo.yachtType;
+	}
 
 	public String getName()
 	{
-		return name;
+		return yachtInfo.name;
 	}
 
 	public int getRow()
 	{
-		return row;
+		return yachtInfo.row;
 	}
 
 	public void setRow(int r)
 	{
-		row = r;
-		yachtSprite.setY(YachtFactory.getCellLocation(row
-				- (orientation == Orientation.VERTICAL ? 1 : 0)));
+		yachtInfo.row = r;
+		yachtSprite.setY(YachtFactory.getCellLocation(yachtInfo.row
+				- (yachtInfo.orientation == Orientation.VERTICAL ? 1 : 0)));
 	}
 
 	public int getColumn()
 	{
-		return col;
+		return yachtInfo.col;
 	}
 
 	public void setColumn(int c)
 	{
-		col = c;
-		yachtSprite.setX(YachtFactory.getCellLocation(col));
+		yachtInfo.col = c;
+		yachtSprite.setX(YachtFactory.getCellLocation(yachtInfo.col));
 	}
 
 	public Orientation getOrientation()
 	{
-		return orientation;
+		return yachtInfo.orientation;
 	}
 
 	public void toggleOrientation()
 	{
-		if (orientation == Orientation.HORIZONTAL)
+		if (yachtInfo.orientation == Orientation.HORIZONTAL)
 		{
 			// Make yacht vertical, rotate, then account for rotation's
 			// displacement
-			orientation = Orientation.VERTICAL;
+			yachtInfo.orientation = Orientation.VERTICAL;
 			yachtSprite.setRotation(90.0f);
-			yachtSprite.setY(YachtFactory.getCellLocation(row - 1));
+			yachtSprite.setY(YachtFactory.getCellLocation(yachtInfo.row - 1));
 		}
 		else
 		{
 			// Make yacht horizontal, rotate back, then account for rotation's
 			// displacement
-			orientation = Orientation.HORIZONTAL;
+			yachtInfo.orientation = Orientation.HORIZONTAL;
 			yachtSprite.setRotation(0.0f);
-			yachtSprite.setY(YachtFactory.getCellLocation(row));
+			yachtSprite.setY(YachtFactory.getCellLocation(yachtInfo.row));
 		}
 
 	}
 
 	public int getUnits()
 	{
-		return units;
+		return yachtInfo.units;
 	}
 
 	public int getLeft()
 	{
-		return col;
+		return yachtInfo.col;
 	}
 
 	public int getRight()
 	{
 		int offset = 0;
-		switch (orientation)
+		switch (yachtInfo.orientation)
 		{
 		case VERTICAL:
 			offset = 0;
 			break;
 		case HORIZONTAL:
-			offset = units - 1;
+			offset = yachtInfo.units - 1;
 			break;
 		}
-		return col + offset;
+		return yachtInfo.col + offset;
 	}
 
 	public int getTop()
 	{
-		return row;
+		return yachtInfo.row;
 	}
 
 	public int getBottom()
 	{
 		int offset = 0;
-		switch (orientation)
+		switch (yachtInfo.orientation)
 		{
 		case VERTICAL:
-			offset = units - 1;
+			offset = yachtInfo.units - 1;
 			break;
 		case HORIZONTAL:
 			offset = 0;
 			break;
 		}
-		return row + offset;
+		return yachtInfo.row + offset;
 	}
 
 	public Sprite getSprite()
@@ -165,7 +164,7 @@ public abstract class Yacht
 		switch (y.getOrientation())
 		{
 		case VERTICAL:
-			switch (orientation)
+			switch (yachtInfo.orientation)
 			{
 			case VERTICAL:
 				// Columns must be equal
@@ -181,7 +180,7 @@ public abstract class Yacht
 			}
 			break;
 		case HORIZONTAL:
-			switch (orientation)
+			switch (yachtInfo.orientation)
 			{
 			case VERTICAL:
 				// Intersecting in a + shape
@@ -189,7 +188,7 @@ public abstract class Yacht
 						&& getTop() <= y.getTop() && y.getTop() <= getBottom());
 			case HORIZONTAL:
 				// Rows must be equal
-				return ((row == y.getRow()) && (
+				return ((yachtInfo.row == y.getRow()) && (
 				// If y to the left of this
 				(y.getLeft() <= getLeft() && getLeft() <= y.getRight()) ||
 				// If this to the left of y
@@ -204,12 +203,12 @@ public abstract class Yacht
 
 	public boolean shoot(int r, int c)
 	{
-		switch (orientation)
+		switch (yachtInfo.orientation)
 		{
 		case HORIZONTAL:
-			return ((row == r) && (col <= c) && (c < col + units));
+			return ((yachtInfo.row == r) && (yachtInfo.col <= c) && (c < yachtInfo.col + yachtInfo.units));
 		case VERTICAL:
-			return ((col == c) && (row <= r) && (r < row + units));
+			return ((yachtInfo.col == c) && (yachtInfo.row <= r) && (r < yachtInfo.row + yachtInfo.units));
 		}
 		// Will never reach here
 		return false;

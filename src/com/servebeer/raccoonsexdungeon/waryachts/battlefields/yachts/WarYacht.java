@@ -6,9 +6,10 @@ import org.andengine.entity.sprite.Sprite;
 public class WarYacht extends Yacht
 {
 	public final static int UNITS = 3;
+	public final static String NAME = "War\nYacht";
 
-	public WarYacht(int r, int c, Orientation o, Sprite sprite)
+	public WarYacht(YachtInfo yi, Sprite sprite)
 	{
-		super("War\nYacht", r, c, o, UNITS, sprite);
+		super(yi, sprite);
 	}
 }

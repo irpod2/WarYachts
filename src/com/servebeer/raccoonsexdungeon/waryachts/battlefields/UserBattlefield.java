@@ -10,8 +10,8 @@ public class UserBattlefield extends Battlefield
 	public UserBattlefield(GameState gs)
 	{
 		super(gs);
-		fillGrid(gs.getOppShots());
 		attachYachts(gs.getMyYachts());
+		fillGrid(gs.getOppShots());
 	}
 
 	// ===========================================================

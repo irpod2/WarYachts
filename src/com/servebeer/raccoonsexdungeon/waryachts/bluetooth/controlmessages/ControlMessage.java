@@ -1,6 +1,7 @@
 
 package com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages;
 
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 
 public class ControlMessage
@@ -9,11 +10,12 @@ public class ControlMessage
 	protected ControlType type;
 	protected int row;
 	protected int col;
-	protected CallbackVoid onFailCallback;
+	protected CallbackVoid onFailCallback;	
+	protected Yacht yacht;
 
 	public enum ControlType
 	{
-		SHOOT, HIT, MISS, ACK, READY, ERROR
+		SHOOT, HIT, MISS, DESTROYED, ACK, READY, ERROR
 	}
 
 
@@ -54,6 +56,11 @@ public class ControlMessage
 	{
 		col = c;
 	}
+	
+	protected void setYacht(Yacht y)
+	{
+		yacht= y;
+	}
 
 	public int getRow()
 	{
@@ -63,6 +70,11 @@ public class ControlMessage
 	public int getCol()
 	{
 		return col;
+	}
+	
+	public Yacht getYacht()
+	{
+		return yacht;
 	}
 
 	public String getMessage()
@@ -201,6 +213,24 @@ public class ControlMessage
 					}
 				});
 		ctrlMsg.setMessage("M:S:" + String.valueOf(col) + String.valueOf(row));
+		return ctrlMsg;
+	}
+	
+	
+	// NOT DONE
+	public static ControlMessage createDestroyedMessage(int row, int col, Yacht y)
+	{
+		ControlMessage ctrlMsg = new ControlMessage(ControlType.DESTROYED,
+				new CallbackVoid()
+				{
+					public void onCallback()
+					{
+
+					}
+				});
+		ctrlMsg.setYacht(y);
+
+		ctrlMsg.setMessage("D:S:" + String.valueOf(col) + String.valueOf(row) );
 		return ctrlMsg;
 	}
 

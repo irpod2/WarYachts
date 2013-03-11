@@ -216,10 +216,13 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 
 	private void onShipsPlaced()
 	{
+		gameState.updateMyYachts(placementMenu.getPlacedYachts());
+		
 		placementMenu.onSuccess();
 		scene.registerTouchArea(enemyBattlefield);
 		scene.setOnSceneTouchListener(GameInstanceScenario.this);
 		scene.registerUpdateHandler(swipeHandler);
+		
 		SaveService.getInstance(activity).save(gameState);
 	}
 

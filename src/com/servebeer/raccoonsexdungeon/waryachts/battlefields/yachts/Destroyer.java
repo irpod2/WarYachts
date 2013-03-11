@@ -6,9 +6,11 @@ import org.andengine.entity.sprite.Sprite;
 public class Destroyer extends Yacht
 {
 	public final static int UNITS = 4;
+	
+	public final static String NAME = "Old\nReliable";
 
-	public Destroyer(int r, int c, Orientation o, Sprite sprite)
+	public Destroyer(YachtInfo yi, Sprite sprite)
 	{
-		super("Old\nReliable", r, c, o, UNITS, sprite);
+		super(yi, sprite);
 	}
 }

@@ -13,18 +13,15 @@ import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Destroyer;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Skunker;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.SubYacht;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.WarYacht;
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht.Orientation;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.Orientation;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.YachtType;
 
 public class YachtFactory extends SpriteFactory
 {
 	protected static ArrayList<TextureRegion> blueYachtRegions;
 	protected static ArrayList<TextureRegion> redYachtRegions;
 
-	public static final int SHIPNO_CARRIER = 0;
-	public static final int SHIPNO_DESTROYER = 1;
-	public static final int SHIPNO_SUBYACHT = 2;
-	public static final int SHIPNO_WARYACHT = 3;
-	public static final int SHIPNO_SKUNKER = 4;
 
 	public static void loadContent()
 	{
@@ -113,9 +110,12 @@ public class YachtFactory extends SpriteFactory
 		yachtAtlas.load();
 	}
 
-	protected static Sprite createBlueYacht(int row, int col, Orientation or,
-			int shipNo)
+	public static Sprite createBlueYacht(YachtInfo yi)
 	{
+		int row = yi.row;
+		int col = yi.col;
+		Orientation or = yi.orientation;
+		int shipNo = yi.yachtType.ordinal();
 
 		Sprite yachtSprite = new Sprite(getCellLocation(col),
 				getCellLocation(row - (or == Orientation.VERTICAL ? 1 : 0)),
@@ -138,39 +138,33 @@ public class YachtFactory extends SpriteFactory
 		return yachtSprite;
 	}
 
-	public static Carrier createCarrierYacht(int row, int col, Orientation or)
+	public static Carrier createCarrierYacht(YachtInfo yi)
 	{
-		Carrier y = new Carrier(row, col, or, createBlueYacht(row, col, or,
-				SHIPNO_CARRIER));
+		Carrier y = new Carrier(yi, createBlueYacht(yi));
 		return y;
 	}
 
-	public static Destroyer createDestroyerYacht(int row, int col,
-			Orientation or)
-	{
-		Destroyer y = new Destroyer(row, col, or, createBlueYacht(row, col, or,
-				SHIPNO_DESTROYER));
+	public static Destroyer createDestroyerYacht(YachtInfo yi)
+	{	
+		Destroyer y = new Destroyer(yi, createBlueYacht(yi));
 		return y;
 	}
 
-	public static SubYacht createSubYacht(int row, int col, Orientation or)
+	public static SubYacht createSubYacht(YachtInfo yi)
 	{
-		SubYacht y = new SubYacht(row, col, or, createBlueYacht(row, col, or,
-				SHIPNO_SUBYACHT));
+		SubYacht y = new SubYacht(yi, createBlueYacht(yi));
 		return y;
 	}
 
-	public static WarYacht createWarYacht(int row, int col, Orientation or)
+	public static WarYacht createWarYacht(YachtInfo yi)
 	{
-		WarYacht y = new WarYacht(row, col, or, createBlueYacht(row, col, or,
-				SHIPNO_WARYACHT));
+		WarYacht y = new WarYacht(yi, createBlueYacht(yi));
 		return y;
 	}
 
-	public static Skunker createSkunkerYacht(int row, int col, Orientation or)
+	public static Skunker createSkunkerYacht(YachtInfo yi)
 	{
-		Skunker y = new Skunker(row, col, or, createBlueYacht(row, col, or,
-				SHIPNO_SKUNKER));
+		Skunker y = new Skunker(yi, createBlueYacht(yi));
 		return y;
 	}
 }

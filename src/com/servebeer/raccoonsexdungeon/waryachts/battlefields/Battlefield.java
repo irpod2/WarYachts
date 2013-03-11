@@ -7,6 +7,8 @@ import org.andengine.entity.sprite.Sprite;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.YachtType;
 import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.YachtFactory;
@@ -33,32 +35,32 @@ public abstract class Battlefield
 		touchedDown = false;
 	}
 
-	protected void attachYachts(ArrayList<Yacht> ys)
+	protected void attachYachts(ArrayList<YachtInfo> ys)
 	{
-		for(Yacht y : ys)
+		for(YachtInfo y : ys)
 		{
-			String name = y.getName();
+			YachtType yt = y.yachtType;
 			
-			if(name.equals("Helicopter\nCarrier"))
+			switch(yt)
 			{
-				addYacht(YachtFactory.createCarrierYacht(y.getRow(), y.getColumn(), y.getOrientation()));
+			case HEL_CAR:
+				addYacht(YachtFactory.createCarrierYacht(y));
+				break;
+			case OLD_REL:
+				addYacht(YachtFactory.createDestroyerYacht(y));
+				break;
+			case WAR_YAT:
+				addYacht(YachtFactory.createWarYacht(y));
+				break;
+			case POSI:
+				addYacht(YachtFactory.createSubYacht(y));
+				break;
+			case SKUNK:
+				addYacht(YachtFactory.createSkunkerYacht(y));
+				break;
+				
 			}
-			else if(name.equals("Old\nReliable"))
-			{
-				addYacht(YachtFactory.createDestroyerYacht(y.getRow(), y.getColumn(), y.getOrientation()));
-			}
-			else if(name.equals("War\nYacht"))
-			{
-				addYacht(YachtFactory.createWarYacht(y.getRow(), y.getColumn(), y.getOrientation()));
-			}
-			else if(name.equals("The\nPoseidon"))
-			{
-				addYacht(YachtFactory.createSubYacht(y.getRow(), y.getColumn(), y.getOrientation()));
-			}
-			else if(name.equals("The\nSkunker"))
-			{
-				addYacht(YachtFactory.createSkunkerYacht(y.getRow(), y.getColumn(), y.getOrientation()));
-			}
+			
 		}
 	}
 
