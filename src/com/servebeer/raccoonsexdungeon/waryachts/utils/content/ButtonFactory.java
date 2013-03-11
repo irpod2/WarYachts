@@ -12,6 +12,7 @@ import org.andengine.util.color.Color;
 public class ButtonFactory extends ContentFactory
 {
 	protected static final int NUM_MENU_BUTTONS = 5;
+	
 	protected static final float MENU_BUTTON_HEIGHT = 100.0f * SIZE_RATIO;
 
 

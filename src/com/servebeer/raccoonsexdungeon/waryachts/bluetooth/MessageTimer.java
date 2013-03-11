@@ -40,7 +40,7 @@ public class MessageTimer implements IUpdateHandler
 				{
 
 					WarYachtsActivity.getConnectionHandler().unqueueMessage(
-							ctrlMsg);
+							ctrlMsg, false);
 
 					WarYachtsActivity.getConnectionHandler().sendMsg(ctrlMsg);
 				}

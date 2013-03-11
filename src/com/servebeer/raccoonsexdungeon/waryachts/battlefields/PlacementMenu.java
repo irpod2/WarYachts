@@ -96,16 +96,6 @@ public class PlacementMenu implements IOnSceneTouchListener
 					{
 						readyButton.setEnabled(false);
 						onShipsPlacedCallback.onCallback();
-						displayedYacht = null;
-						displayBox.detachChild(yachtDescription);
-						yachtDescription = null;
-						layer.detachChild(boundingBox);
-						boundingBox = null;
-						layer.detachChild(displayBox);
-						displayBox = null;
-						readyButton.detachSelf();
-						scene.unregisterTouchArea(readyButton);
-						readyButton = null;
 					}
 				});
 		readyButton.setEnabled(false);
@@ -131,6 +121,25 @@ public class PlacementMenu implements IOnSceneTouchListener
 	{
 		scene = scn;
 		scene.registerTouchArea(readyButton);
+	}
+	
+	public void setReadyButtonEnabled(boolean enabled)
+	{
+		readyButton.setEnabled(enabled);
+	}
+	
+	public void onSuccess()
+	{
+		displayedYacht = null;
+		displayBox.detachChild(yachtDescription);
+		yachtDescription = null;
+		layer.detachChild(boundingBox);
+		boundingBox = null;
+		layer.detachChild(displayBox);
+		displayBox = null;
+		readyButton.detachSelf();
+		scene.unregisterTouchArea(readyButton);
+		readyButton = null;
 	}
 
 	private void resetYachtPosition()

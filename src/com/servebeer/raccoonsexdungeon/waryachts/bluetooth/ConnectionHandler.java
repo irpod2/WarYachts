@@ -69,6 +69,29 @@ public class ConnectionHandler
 		return busy;
 	}
 
+	public void setAdapter()
+	{
+		activity.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				btAdapter = BluetoothAdapter.getDefaultAdapter();
+			}
+		});
+	}
+
+	public BluetoothAdapter getAdapter()
+	{
+		return btAdapter;
+	}
+	
+	public String getOppMac()
+	{
+		return opponentDevice.getAddress();
+		
+	}
+
 	public void requestEnableBluetooth()
 	{
 		busy = BusyType.DISCOVERING;
@@ -307,7 +330,8 @@ public class ConnectionHandler
 	public void sendMsg(ControlMessage ctrlMsg)
 	{
 		busy = BusyType.CONNECTING;
-		outThread = new OutputCommThread(activity, opponentDevice, ctrlMsg);
+		outThread = new OutputCommThread(activity, opponentDevice, ctrlMsg,
+				btAdapter);
 		outThread.start();
 	}
 
@@ -328,7 +352,8 @@ public class ConnectionHandler
 		});
 	}
 
-	public void unqueueMessage(final ControlMessage ctrlMsg)
+	public void unqueueMessage(final ControlMessage ctrlMsg,
+			final boolean sanitize)
 	{
 		// Always run on update thread to prevent concurrency problems
 		// (thread-safe)
@@ -337,7 +362,14 @@ public class ConnectionHandler
 			@Override
 			public void run()
 			{
-				final String targetString = ctrlMsg.getSanitizedMessage();
+
+				final String targetString;
+
+				if (sanitize)
+					targetString = ctrlMsg.getSanitizedMessage();
+				else
+					targetString = ctrlMsg.getMessage();
+
 				for (MessagePair msgPair : unackedMessages)
 				{
 					// If message is found to be unacked

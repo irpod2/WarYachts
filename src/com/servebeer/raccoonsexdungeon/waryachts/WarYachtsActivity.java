@@ -108,7 +108,7 @@ public class WarYachtsActivity extends BaseGameActivity
 	{
 		startMenuScene = new Scene();
 		gameInstanceScene = new Scene();
-		currentScenario = new StartMenuScenario(this, startMenuScene);
+		currentScenario = new StartMenuScenario(this, startMenuScene, prepareLoadGameInstanceCallback);
 		hud = new HUD();
 		camera.setHUD(hud);
 
@@ -160,14 +160,29 @@ public class WarYachtsActivity extends BaseGameActivity
 			currentScenario = nextScenario;
 		}
 	};
-	
+
+	protected CallbackVoid prepareLoadGameInstanceCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
+					gameInstanceScene, prepareStartMenuCallback, btHandler,
+					false, true);
+			transitionHandler = new ComposedTransitionHandler(
+					WarYachtsActivity.this, camera, currentScenario,
+					nextScenario, switchScenarioCallback);
+		}
+	};
+
 	protected CallbackVoid prepareClientGameInstanceCallback = new CallbackVoid()
 	{
 		@Override
 		public void onCallback()
 		{
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback, btHandler, false);
+					gameInstanceScene, prepareStartMenuCallback, btHandler,
+					false, false);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
 					nextScenario, switchScenarioCallback);
@@ -180,7 +195,8 @@ public class WarYachtsActivity extends BaseGameActivity
 		public void onCallback()
 		{
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback, btHandler, true);
+					gameInstanceScene, prepareStartMenuCallback, btHandler,
+					true, false);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
 					nextScenario, switchScenarioCallback);
@@ -194,7 +210,7 @@ public class WarYachtsActivity extends BaseGameActivity
 		{
 			btHandler.reset();
 			nextScenario = new StartMenuScenario(WarYachtsActivity.this,
-					startMenuScene);
+					startMenuScene, prepareLoadGameInstanceCallback);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
 					nextScenario, switchScenarioCallback);

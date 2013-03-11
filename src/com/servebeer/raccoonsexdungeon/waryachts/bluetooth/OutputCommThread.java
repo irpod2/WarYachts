@@ -24,14 +24,14 @@ public class OutputCommThread extends Thread
 	private BaseGameActivity activity;
 
 	public OutputCommThread(BaseGameActivity bga, BluetoothDevice device,
-			ControlMessage msg)
+			ControlMessage msg, BluetoothAdapter adapter)
 	{
 		// Use a temporary object that is later assigned to mmSocket,
 		// because mmSocket is final
 		BluetoothSocket tmp = null;
 		activity = bga;
 		btDevice = device;
-		btAdapter = BluetoothAdapter.getDefaultAdapter();
+		btAdapter = adapter;
 
 		// Get a BluetoothSocket to connect with the given BluetoothDevice
 		try
@@ -78,6 +78,12 @@ public class OutputCommThread extends Thread
 							Toast.LENGTH_SHORT).show();
 				}
 			});
+
+			WarYachtsActivity.getConnectionHandler().listen();
+
+			outMsg.onFail();
+			
+			return;
 		}
 
 

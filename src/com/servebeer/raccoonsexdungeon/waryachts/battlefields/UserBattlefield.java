@@ -3,12 +3,15 @@ package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
+import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
 
 public class UserBattlefield extends Battlefield
 {
-	public UserBattlefield()
+	public UserBattlefield(GameState gs)
 	{
-		super();
+		super(gs);
+		fillGrid(gs.getOppShots());
+		attachYachts(gs.getMyYachts());
 	}
 
 	// ===========================================================
@@ -19,12 +22,22 @@ public class UserBattlefield extends Battlefield
 		{
 			if (y.shoot(row, col))
 			{
-				shots[row][col] = new Shot(row, col, ShotType.HIT, this);
 				return true;
 			}
 		}
-		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
 		return false;
+	}
+	
+	public void hit(int row, int col)
+	{
+		shots[row][col] = new Shot(row, col, ShotType.HIT, this);
+		gameState.addOppShot(row, col, ShotType.HIT);
+	}
+
+	public void miss(int row, int col)
+	{
+		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
+		gameState.addOppShot(row, col, ShotType.MISS);
 	}
 
 	// ===========================================================

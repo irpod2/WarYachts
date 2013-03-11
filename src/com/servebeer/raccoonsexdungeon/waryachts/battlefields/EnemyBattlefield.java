@@ -1,19 +1,23 @@
+
 package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.input.touch.TouchEvent;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
+import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 
 public class EnemyBattlefield extends Battlefield implements ITouchArea
 {
 	protected Targeter targeter;
 	protected Targeter selectedLocation;
-	
-	public EnemyBattlefield()
+
+	public EnemyBattlefield(GameState gs)
 	{
-		super();
+		super(gs);
+		fillGrid(gs.getMyShots());
+		attachYachts(gs.getOppYachts());
 		targeter = SpriteFactory.createTargeter();
 		selectedLocation = SpriteFactory.createTargetSelector();
 	}
@@ -53,11 +57,13 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 	public void hit(int row, int col)
 	{
 		shots[row][col] = new Shot(row, col, ShotType.HIT, this);
+		gameState.addMyShot(row, col, ShotType.HIT);
 	}
 
 	public void miss(int row, int col)
 	{
 		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
+		gameState.addMyShot(row, col, ShotType.MISS);
 	}
 
 	// ===========================================================
@@ -86,7 +92,7 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 		coords[1] = pY + gridSprite.getY() + SpriteFactory.GRID_PADDING;
 		return coords;
 	}
-	
+
 	@Override
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
 			float pTouchAreaLocalX, float pTouchAreaLocalY)
