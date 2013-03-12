@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.R;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
+import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage.ControlType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 
 public class ConnectionHandler
@@ -85,11 +86,11 @@ public class ConnectionHandler
 	{
 		return btAdapter;
 	}
-	
+
 	public String getOppMac()
 	{
 		return opponentDevice.getAddress();
-		
+
 	}
 
 	public void requestEnableBluetooth()
@@ -364,8 +365,9 @@ public class ConnectionHandler
 			{
 
 				final String targetString;
-
-				if (sanitize)
+				if (ctrlMsg.getType() == ControlType.DESTROYED)
+					targetString = ctrlMsg.getMessage().substring(2, 6);
+				else if (sanitize)
 					targetString = ctrlMsg.getSanitizedMessage();
 				else
 					targetString = ctrlMsg.getMessage();

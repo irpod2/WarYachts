@@ -3,10 +3,12 @@ package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
 import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
 
 public class UserBattlefield extends Battlefield
 {
+
 	public UserBattlefield(GameState gs)
 	{
 		super(gs);
@@ -14,20 +16,30 @@ public class UserBattlefield extends Battlefield
 		fillGrid(gs.getOppShots());
 	}
 
+	public boolean isDefeated()
+	{
+		for (Yacht y : yachts)
+		{
+			if (!y.isDestroyed())
+				return false;
+		}
+		return true;
+	}
+
 	// ===========================================================
 	// For when enemy shoots our battlefield
-	public boolean shoot(int row, int col)
+	public YachtInfo shoot(int row, int col)
 	{
 		for (Yacht y : yachts)
 		{
 			if (y.shoot(row, col))
 			{
-				return true;
+				return y.getInfo();
 			}
 		}
-		return false;
+		return null;
 	}
-	
+
 	public void hit(int row, int col)
 	{
 		shots[row][col] = new Shot(row, col, ShotType.HIT, this);

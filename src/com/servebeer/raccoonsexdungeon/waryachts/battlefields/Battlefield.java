@@ -3,6 +3,7 @@ package com.servebeer.raccoonsexdungeon.waryachts.battlefields;
 
 import java.util.ArrayList;
 
+import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
@@ -23,6 +24,8 @@ public abstract class Battlefield
 	protected GameState gameState;
 	protected Shot[][] shots;
 	protected Sprite gridSprite;
+	protected Entity shipLayer;
+	protected Entity shotLayer;
 	protected ArrayList<Yacht> yachts;
 	protected boolean touchedDown;
 
@@ -30,6 +33,10 @@ public abstract class Battlefield
 	{
 		gameState = gs;
 		gridSprite = SpriteFactory.createGrid();
+		shipLayer = new Entity();
+		shotLayer = new Entity();
+		gridSprite.attachChild(shipLayer);
+		gridSprite.attachChild(shotLayer);
 		yachts = new ArrayList<Yacht>();
 		shots = new Shot[GRID_SIZE][GRID_SIZE];
 		touchedDown = false;
@@ -58,9 +65,7 @@ public abstract class Battlefield
 			case SKUNK:
 				addYacht(YachtFactory.createSkunkerYacht(y));
 				break;
-				
 			}
-			
 		}
 	}
 
@@ -86,7 +91,7 @@ public abstract class Battlefield
 	{
 		if (yachts.add(y))
 		{
-			gridSprite.attachChild(y.getSprite());
+			shipLayer.attachChild(y.getSprite());
 			return true;
 		}
 		else
@@ -95,7 +100,7 @@ public abstract class Battlefield
 
 	public void attachShot(Sprite shot)
 	{
-		gridSprite.attachChild(shot);
+		shotLayer.attachChild(shot);
 	}
 
 	public Sprite getSprite()

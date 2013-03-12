@@ -148,6 +148,7 @@ public class InputCommThread extends Thread
 			case ACK:
 			case HIT:
 			case MISS:
+			case DESTROYED:
 				// Handle timeout AND let scenario handle message
 				WarYachtsActivity.getConnectionHandler().unqueueMessage(ctrl, true);
 			default:

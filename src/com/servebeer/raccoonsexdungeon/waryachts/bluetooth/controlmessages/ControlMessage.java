@@ -1,7 +1,10 @@
 
 package com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages;
 
-import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
+
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.Orientation;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.YachtType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 
 public class ControlMessage
@@ -10,8 +13,8 @@ public class ControlMessage
 	protected ControlType type;
 	protected int row;
 	protected int col;
-	protected CallbackVoid onFailCallback;	
-	protected Yacht yacht;
+	protected CallbackVoid onFailCallback;
+	protected YachtInfo yachtInfo;
 
 	public enum ControlType
 	{
@@ -56,10 +59,10 @@ public class ControlMessage
 	{
 		col = c;
 	}
-	
-	protected void setYacht(Yacht y)
+
+	protected void setYachtInfo(YachtInfo yi)
 	{
-		yacht= y;
+		yachtInfo = yi;
 	}
 
 	public int getRow()
@@ -71,10 +74,10 @@ public class ControlMessage
 	{
 		return col;
 	}
-	
-	public Yacht getYacht()
+
+	public YachtInfo getYachtInfo()
 	{
-		return yacht;
+		return yachtInfo;
 	}
 
 	public String getMessage()
@@ -95,7 +98,7 @@ public class ControlMessage
 	public static void parseAckRowCol(String ctrlStr, ControlMessage ctrlMsg)
 	{
 		char type = ctrlStr.charAt(2);
-		if (type == 'M' || type == 'H')
+		if (type == 'M' || type == 'H' || type == 'D')
 		{
 			int col = ctrlStr.charAt(6) - '0';
 			int row = ctrlStr.charAt(7) - '0';
@@ -132,6 +135,24 @@ public class ControlMessage
 			{
 				ctrlMsg.setMessage("Message received was not of proper length");
 			}
+		}
+		// Destroyed message
+		else if (firstTwo.equals("D:"))
+		{
+			int hitCol = theRest.charAt(2) - '0';
+			int hitRow = theRest.charAt(3) - '0';
+			ctrlMsg.setCol(hitCol);
+			ctrlMsg.setRow(hitRow);
+			int delimiter = theRest.indexOf('|');
+			String yachtType = theRest.substring(4, delimiter);
+			YachtType t = YachtType.valueOf(yachtType);
+			int shipCol = theRest.charAt(delimiter + 1) - '0';
+			int shipRow = theRest.charAt(delimiter + 2) - '0';
+			Orientation o = Orientation.valueOf(theRest
+					.substring(delimiter + 3));
+			YachtInfo info = new YachtInfo(t, o, shipRow, shipCol);
+			ctrlMsg.setYachtInfo(info);
+			ctrlMsg.setType(ControlType.DESTROYED);
 		}
 		// Hit message
 		else if (firstTwo.equals("H:"))
@@ -215,10 +236,11 @@ public class ControlMessage
 		ctrlMsg.setMessage("M:S:" + String.valueOf(col) + String.valueOf(row));
 		return ctrlMsg;
 	}
-	
-	
+
+
 	// NOT DONE
-	public static ControlMessage createDestroyedMessage(int row, int col, Yacht y)
+	public static ControlMessage createDestroyedMessage(int row, int col,
+			YachtInfo yi)
 	{
 		ControlMessage ctrlMsg = new ControlMessage(ControlType.DESTROYED,
 				new CallbackVoid()
@@ -228,9 +250,10 @@ public class ControlMessage
 
 					}
 				});
-		ctrlMsg.setYacht(y);
 
-		ctrlMsg.setMessage("D:S:" + String.valueOf(col) + String.valueOf(row) );
+		ctrlMsg.setMessage("D:S:" + String.valueOf(col) + String.valueOf(row)
+				+ yi.yachtType.toString() + "|" + String.valueOf(yi.col)
+				+ String.valueOf(yi.row) + yi.orientation.toString());
 		return ctrlMsg;
 	}
 

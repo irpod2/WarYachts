@@ -34,8 +34,8 @@ public class GameState implements Serializable
 	{
 		myTurn = turn;
 
-		myYachts = new ArrayList<YachtInfo>(Battlefield.NUM_YACHTS);
-		oppYachts = new ArrayList<YachtInfo>(Battlefield.NUM_YACHTS);
+		myYachts = new ArrayList<YachtInfo>();
+		oppYachts = new ArrayList<YachtInfo>();
 		
 		myShots = new ShotType[Battlefield.GRID_SIZE][Battlefield.GRID_SIZE];
 		oppShots = new ShotType[Battlefield.GRID_SIZE][Battlefield.GRID_SIZE];

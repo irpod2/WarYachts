@@ -156,15 +156,32 @@ public class PlacementMenu implements IOnSceneTouchListener
 	public void onSuccess()
 	{
 		displayedYacht = null;
-		displayBox.detachChild(yachtDescription);
-		yachtDescription = null;
-		layer.detachChild(boundingBox);
-		boundingBox = null;
-		layer.detachChild(displayBox);
-		displayBox = null;
-		readyButton.detachSelf();
-		scene.unregisterTouchArea(readyButton);
-		readyButton = null;
+		
+		if(yachtDescription != null)
+		{
+			if(yachtDescription.hasParent())
+				yachtDescription.detachSelf();
+			yachtDescription = null;
+		}
+		
+		if(boundingBox != null)
+		{
+			layer.detachChild(boundingBox);
+			boundingBox = null;
+		}
+		
+		if(displayBox != null)
+		{
+			layer.detachChild(displayBox);
+			displayBox = null;
+		}
+		
+		if(readyButton != null)	
+		{
+			readyButton.detachSelf();
+			scene.unregisterTouchArea(readyButton);
+			readyButton = null;
+		}
 	}
 
 	private void resetYachtPosition()

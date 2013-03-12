@@ -5,6 +5,7 @@ import org.andengine.entity.scene.ITouchArea;
 import org.andengine.input.touch.TouchEvent;
 
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
 import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 
@@ -22,24 +23,40 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 		selectedLocation = SpriteFactory.createTargetSelector();
 	}
 
+	public boolean defeatedAllEnemies()
+	{
+		for (Yacht y : yachts)
+		{
+			if (y == null || !y.isDestroyed())
+				return false;
+		}
+		return true;
+	}
+
 	protected void attachTargeter(int row, int col)
 	{
-		targeter.setLocation(row, col);
+		setTargeter(row, col);
 		if (!targeter.hasParent())
-			gridSprite.attachChild(targeter);
+			shotLayer.attachChild(targeter);
 	}
 
 	protected void setTargeter(int row, int col)
 	{
-		targeter.setLocation(row, col);
+		if (shots[row][col] == null)
+		{
+			targeter.setLocation(row, col);
+		}
 	}
 
 	protected void selectLocation(int row, int col)
 	{
-		selectedLocation.setLocation(row, col);
+		if (shots[row][col] == null)
+		{
+			selectedLocation.setLocation(row, col);
+		}
 
 		if (!selectedLocation.hasParent())
-			gridSprite.attachChild(selectedLocation);
+			shotLayer.attachChild(selectedLocation);
 	}
 
 	public int getSelectedRow()
@@ -112,7 +129,7 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 					&& (targeter.getRow() != row || targeter.getCol() != col))
 			{
 				if (!targeter.hasParent())
-					gridSprite.attachChild(targeter);
+					shotLayer.attachChild(targeter);
 
 				setTargeter(row, col);
 			}
@@ -122,12 +139,12 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 				setTargeter(row, col);
 				selectLocation(row, col);
 				if (targeter.hasParent())
-					gridSprite.detachChild(targeter);
+					shotLayer.detachChild(targeter);
 			}
 		}
 		else if (targeter.hasParent())
 		{
-			gridSprite.detachChild(targeter);
+			shotLayer.detachChild(targeter);
 		}
 		return true;
 	}

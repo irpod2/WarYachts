@@ -22,6 +22,11 @@ public abstract class Yacht
 		yachtSprite = sprite;
 	}
 
+	public boolean isDestroyed()
+	{
+		return yachtInfo.numHits <= 0;
+	}
+
 	public void setBadPlacementRectangle()
 	{
 		if (badPlacementRectangle == null)
@@ -44,12 +49,12 @@ public abstract class Yacht
 			yachtSprite.detachChild(badPlacementRectangle);
 		}
 	}
-	
+
 	public YachtInfo getInfo()
 	{
 		return yachtInfo;
 	}
-	
+
 	public YachtType getType()
 	{
 		return yachtInfo.yachtType;
@@ -206,9 +211,11 @@ public abstract class Yacht
 		switch (yachtInfo.orientation)
 		{
 		case HORIZONTAL:
-			return ((yachtInfo.row == r) && (yachtInfo.col <= c) && (c < yachtInfo.col + yachtInfo.units));
+			return ((yachtInfo.row == r) && (yachtInfo.col <= c) && (c < yachtInfo.col
+					+ yachtInfo.units));
 		case VERTICAL:
-			return ((yachtInfo.col == c) && (yachtInfo.row <= r) && (r < yachtInfo.row + yachtInfo.units));
+			return ((yachtInfo.col == c) && (yachtInfo.row <= r) && (r < yachtInfo.row
+					+ yachtInfo.units));
 		}
 		// Will never reach here
 		return false;
