@@ -5,9 +5,8 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
+import org.andengine.entity.text.Text;
 import org.andengine.ui.activity.BaseGameActivity;
-
-import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
@@ -16,25 +15,24 @@ import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.Contr
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
+import com.servebeer.raccoonsexdungeon.waryachts.utils.content.TextFactory;
 
 
 public class StartMenuScenario implements IScenario
 {
+	protected final String WAR_YACHTS = "War Yachts";
 	protected BaseGameActivity activity;
 	protected Scene scene;
 	protected Background oceanBG;
 	protected ConnectionHandler btHandler;
 
+	protected Text warYachtsText;
+	protected Text warYachtsTextBG;
+
 	protected ButtonSprite hostGameButton;
 	protected ButtonSprite findGameButton;
-	protected ButtonSprite preferencesButton;
-	protected ButtonSprite quitButton;
-
-	// TODO: GET RID OF ME
-	protected ButtonSprite saveButton;
 	protected ButtonSprite loadButton;
-
-	// END RID OF
+	protected ButtonSprite quitButton;
 
 	public StartMenuScenario(BaseGameActivity bga, Scene scn,
 			CallbackVoid loadGameCallback)
@@ -48,7 +46,11 @@ public class StartMenuScenario implements IScenario
 
 	protected void createButtons(final CallbackVoid loadGameCallback)
 	{
-		hostGameButton = ButtonFactory.createMenuButton("Host New Game", 1,
+		warYachtsTextBG = TextFactory.createWarYachtsBannerTextShadow();
+		warYachtsText = TextFactory.createWarYachtsBannerText();
+		warYachtsTextBG.attachChild(warYachtsText);
+
+		hostGameButton = ButtonFactory.createMenuButton("Host New Game", 2,
 				new OnClickListener()
 				{
 					@Override
@@ -69,7 +71,7 @@ public class StartMenuScenario implements IScenario
 					}
 				});
 
-		findGameButton = ButtonFactory.createMenuButton("Find Game", 2,
+		findGameButton = ButtonFactory.createMenuButton("Find Game", 3,
 				new OnClickListener()
 				{
 					@Override
@@ -90,7 +92,7 @@ public class StartMenuScenario implements IScenario
 					}
 				});
 
-		loadButton = ButtonFactory.createMenuButton("Continue Game", 3,
+		loadButton = ButtonFactory.createMenuButton("Continue Game", 4,
 				new OnClickListener()
 				{
 					@Override
@@ -102,16 +104,7 @@ public class StartMenuScenario implements IScenario
 					}
 				});
 
-		/*
-		 * preferencesButton = ButtonFactory.createMenuButton("Preferences", 3,
-		 * new OnClickListener() {
-		 * 
-		 * @Override public void onClick(ButtonSprite pButtonSprite, float
-		 * pTouchAreaLocalX, float pTouchAreaLocalY) {
-		 * activity.startActivity(new Intent(activity,
-		 * PreferencesActivity.class)); } });
-		 */
-		quitButton = ButtonFactory.createMenuButton("Quit", 4,
+		quitButton = ButtonFactory.createMenuButton("Quit", 5,
 				new OnClickListener()
 				{
 					@Override
@@ -130,10 +123,9 @@ public class StartMenuScenario implements IScenario
 		scene.setBackground(oceanBG);
 		scene.attachChild(hostGameButton);
 		scene.attachChild(findGameButton);
-		// scene.attachChild(preferencesButton);
 		scene.attachChild(loadButton);
 		scene.attachChild(quitButton);
-
+		scene.attachChild(warYachtsTextBG);
 
 	}
 
@@ -142,7 +134,6 @@ public class StartMenuScenario implements IScenario
 	{
 		scene.registerTouchArea(hostGameButton);
 		scene.registerTouchArea(findGameButton);
-		// scene.registerTouchArea(preferencesButton);
 		scene.registerTouchArea(loadButton);
 		scene.registerTouchArea(quitButton);
 	}
@@ -152,7 +143,6 @@ public class StartMenuScenario implements IScenario
 	{
 		scene.unregisterTouchArea(hostGameButton);
 		scene.unregisterTouchArea(findGameButton);
-		// scene.unregisterTouchArea(preferencesButton);
 		scene.unregisterTouchArea(loadButton);
 		scene.unregisterTouchArea(quitButton);
 
@@ -182,14 +172,6 @@ public class StartMenuScenario implements IScenario
 
 	public void handleControlMessage(final ControlMessage ctrlMsg)
 	{
-		activity.runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				Toast.makeText(activity, ctrlMsg.getMessage(),
-						Toast.LENGTH_SHORT).show();
-			}
-		});
+
 	}
 }

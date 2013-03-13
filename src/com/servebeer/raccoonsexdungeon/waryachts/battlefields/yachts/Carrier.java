@@ -7,6 +7,7 @@ public class Carrier extends Yacht
 {
 	public final static int UNITS = 5;
 	public final static String NAME = "Helicopter\nCarrier";
+	public final static String SHORT_NAME = "Helicopter Carrier";
 
 	public Carrier(YachtInfo yi, Sprite sprite)
 	{

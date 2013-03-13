@@ -15,7 +15,6 @@ public abstract class Yacht
 	protected YachtInfo yachtInfo;
 	protected Rectangle badPlacementRectangle;
 
-
 	public Yacht(YachtInfo yi, Sprite sprite)
 	{
 		yachtInfo = yi;
@@ -63,6 +62,11 @@ public abstract class Yacht
 	public String getName()
 	{
 		return yachtInfo.name;
+	}
+
+	public String getShortName()
+	{
+		return yachtInfo.shortName;
 	}
 
 	public int getRow()

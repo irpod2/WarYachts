@@ -7,20 +7,28 @@ import org.andengine.input.touch.TouchEvent;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
 import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
+import com.servebeer.raccoonsexdungeon.waryachts.scenario.GameInstanceScenario;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 
 public class EnemyBattlefield extends Battlefield implements ITouchArea
 {
 	protected Targeter targeter;
 	protected Targeter selectedLocation;
+	protected GameInstanceScenario gameInstance;
 
-	public EnemyBattlefield(GameState gs)
+	public EnemyBattlefield(GameState gs, GameInstanceScenario gis)
 	{
 		super(gs);
+		gameInstance = gis;
 		fillGrid(gs.getMyShots());
 		attachYachts(gs.getOppYachts());
 		targeter = SpriteFactory.createTargeter();
 		selectedLocation = SpriteFactory.createTargetSelector();
+	}
+
+	public boolean isTargeterSet()
+	{
+		return selectedLocation.hasParent();
 	}
 
 	public boolean defeatedAllEnemies()
@@ -53,10 +61,13 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 		if (shots[row][col] == null)
 		{
 			selectedLocation.setLocation(row, col);
+			gameInstance.setTargeter(row, col);
+			if (!selectedLocation.hasParent())
+			{
+				shotLayer.attachChild(selectedLocation);
+			}
 		}
 
-		if (!selectedLocation.hasParent())
-			shotLayer.attachChild(selectedLocation);
 	}
 
 	public int getSelectedRow()
@@ -75,12 +86,22 @@ public class EnemyBattlefield extends Battlefield implements ITouchArea
 	{
 		shots[row][col] = new Shot(row, col, ShotType.HIT, this);
 		gameState.addMyShot(row, col, ShotType.HIT);
+		if (selectedLocation.hasParent())
+		{
+			gameInstance.unsetTargeter();
+			shotLayer.detachChild(selectedLocation);
+		}
 	}
 
 	public void miss(int row, int col)
 	{
 		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
 		gameState.addMyShot(row, col, ShotType.MISS);
+		if (selectedLocation.hasParent())
+		{
+			gameInstance.unsetTargeter();
+			shotLayer.detachChild(selectedLocation);
+		}
 	}
 
 	// ===========================================================

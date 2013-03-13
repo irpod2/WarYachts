@@ -2,6 +2,7 @@
 package com.servebeer.raccoonsexdungeon.waryachts.utils.content;
 
 import org.andengine.entity.text.Text;
+import org.andengine.util.color.Color;
 
 public class TextFactory extends ContentFactory
 {
@@ -30,5 +31,24 @@ public class TextFactory extends ContentFactory
 	public static Text createSimpleText(String message)
 	{
 		return createText(0, 0, message, 1.0f);
+	}
+
+	public static Text createWarYachtsBannerText()
+	{
+		Text t = createText(-2.0f, -2.0f, "War Yachts", 1.0f);
+		t.setColor(Color.WHITE);
+		return t;
+	}
+
+	public static Text createWarYachtsBannerTextShadow()
+	{
+		Text t = createSimpleText("War Yachts");
+		t.setColor(Color.BLACK);
+		t.setScale(1.75f);
+		t.setX(cameraWidth / 2.0f - t.getWidthScaled() / 2.0f);
+		t.setY(cameraHeight / ButtonFactory.NUM_MENU_DIVISIONS
+				- t.getHeightScaled() / 2.0f);
+
+		return t;
 	}
 }

@@ -23,9 +23,11 @@ import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.Contr
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions.ComposedTransitionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions.FadeInHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.handlers.transitions.ITransitionHandler;
+import com.servebeer.raccoonsexdungeon.waryachts.scenario.DefeatScenario;
 import com.servebeer.raccoonsexdungeon.waryachts.scenario.GameInstanceScenario;
 import com.servebeer.raccoonsexdungeon.waryachts.scenario.IScenario;
 import com.servebeer.raccoonsexdungeon.waryachts.scenario.StartMenuScenario;
+import com.servebeer.raccoonsexdungeon.waryachts.scenario.VictoryScenario;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ContentFactory;
 
@@ -48,6 +50,7 @@ public class WarYachtsActivity extends BaseGameActivity
 	public static int cameraHeight = CAMERA_HEIGHT;
 	protected Scene startMenuScene;
 	protected Scene gameInstanceScene;
+	protected Scene endGameScene;
 	protected static ConnectionHandler btHandler;
 
 	protected IScenario currentScenario;
@@ -108,7 +111,9 @@ public class WarYachtsActivity extends BaseGameActivity
 	{
 		startMenuScene = new Scene();
 		gameInstanceScene = new Scene();
-		currentScenario = new StartMenuScenario(this, startMenuScene, prepareLoadGameInstanceCallback);
+		endGameScene = new Scene();
+		currentScenario = new StartMenuScenario(this, startMenuScene,
+				prepareLoadGameInstanceCallback);
 		hud = new HUD();
 		camera.setHUD(hud);
 
@@ -131,11 +136,18 @@ public class WarYachtsActivity extends BaseGameActivity
 	Callback<ControlMessage> messageHandlerCallback = new Callback<ControlMessage>()
 	{
 		@Override
-		public void onCallback(ControlMessage ctrlMsg)
+		public void onCallback(final ControlMessage ctrlMsg)
 		{
-			if (ctrlMsg != null)
-				currentScenario.handleControlMessage(ctrlMsg);
-			currentScenario.onNetworkNowFree();
+			runOnUpdateThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if (ctrlMsg != null)
+						currentScenario.handleControlMessage(ctrlMsg);
+					currentScenario.onNetworkNowFree();
+				}
+			});
 		}
 	};
 
@@ -167,7 +179,8 @@ public class WarYachtsActivity extends BaseGameActivity
 		public void onCallback()
 		{
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback, btHandler,
+					gameInstanceScene, prepareStartMenuCallback,
+					prepareVictoryCallback, prepareDefeatCallback, btHandler,
 					false, true);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
@@ -180,8 +193,10 @@ public class WarYachtsActivity extends BaseGameActivity
 		@Override
 		public void onCallback()
 		{
+			btHandler.listen();
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback, btHandler,
+					gameInstanceScene, prepareStartMenuCallback,
+					prepareVictoryCallback, prepareDefeatCallback, btHandler,
 					false, false);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
@@ -195,7 +210,8 @@ public class WarYachtsActivity extends BaseGameActivity
 		public void onCallback()
 		{
 			nextScenario = new GameInstanceScenario(WarYachtsActivity.this,
-					gameInstanceScene, prepareStartMenuCallback, btHandler,
+					gameInstanceScene, prepareStartMenuCallback,
+					prepareVictoryCallback, prepareDefeatCallback, btHandler,
 					true, false);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
@@ -211,6 +227,34 @@ public class WarYachtsActivity extends BaseGameActivity
 			btHandler.reset();
 			nextScenario = new StartMenuScenario(WarYachtsActivity.this,
 					startMenuScene, prepareLoadGameInstanceCallback);
+			transitionHandler = new ComposedTransitionHandler(
+					WarYachtsActivity.this, camera, currentScenario,
+					nextScenario, switchScenarioCallback);
+		}
+	};
+
+	protected CallbackVoid prepareVictoryCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+
+			nextScenario = new VictoryScenario(endGameScene,
+					prepareStartMenuCallback, btHandler);
+			transitionHandler = new ComposedTransitionHandler(
+					WarYachtsActivity.this, camera, currentScenario,
+					nextScenario, switchScenarioCallback);
+		}
+	};
+
+	protected CallbackVoid prepareDefeatCallback = new CallbackVoid()
+	{
+		@Override
+		public void onCallback()
+		{
+
+			nextScenario = new DefeatScenario(endGameScene,
+					prepareStartMenuCallback, btHandler);
 			transitionHandler = new ComposedTransitionHandler(
 					WarYachtsActivity.this, camera, currentScenario,
 					nextScenario, switchScenarioCallback);
@@ -239,6 +283,7 @@ public class WarYachtsActivity extends BaseGameActivity
 						this,
 						"Could not enable bluetooth, War Yachts will now exit.",
 						Toast.LENGTH_LONG).show();
+				btHandler.reset();
 				finish();
 			}
 			break;

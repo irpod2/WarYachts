@@ -40,16 +40,27 @@ public class UserBattlefield extends Battlefield
 		return null;
 	}
 
+	public boolean isShot(int row, int col)
+	{
+		return shots[row][col] != null;
+	}
+	
 	public void hit(int row, int col)
 	{
-		shots[row][col] = new Shot(row, col, ShotType.HIT, this);
-		gameState.addOppShot(row, col, ShotType.HIT);
+		if (shots[row][col] == null)
+		{
+			shots[row][col] = new Shot(row, col, ShotType.HIT, this);
+			gameState.addOppShot(row, col, ShotType.HIT);
+		}
 	}
 
 	public void miss(int row, int col)
 	{
-		shots[row][col] = new Shot(row, col, ShotType.MISS, this);
-		gameState.addOppShot(row, col, ShotType.MISS);
+		if (shots[row][col] == null)
+		{
+			shots[row][col] = new Shot(row, col, ShotType.MISS, this);
+			gameState.addOppShot(row, col, ShotType.MISS);
+		}
 	}
 
 	// ===========================================================

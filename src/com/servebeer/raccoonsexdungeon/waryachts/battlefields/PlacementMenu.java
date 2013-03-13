@@ -59,30 +59,35 @@ public class PlacementMenu implements IOnSceneTouchListener
 		onShipsPlacedCallback = onShipsPlacedCB;
 		dragAnchorX = 0;
 		dragAnchorY = 0;
-		
+
 		placedYachts = new ArrayList<YachtInfo>(5);
 		placedYachts.add(new YachtInfo(YachtType.HEL_CAR,
-				Orientation.HORIZONTAL, 0, 0, Carrier.UNITS, Carrier.NAME));
+				Orientation.HORIZONTAL, 0, 0, Carrier.UNITS, Carrier.NAME,
+				Carrier.SHORT_NAME));
 		placedYachts.add(new YachtInfo(YachtType.OLD_REL,
-				Orientation.HORIZONTAL, 0, 0, Destroyer.UNITS, Destroyer.NAME));
-		placedYachts.add(new YachtInfo(YachtType.POSI,
-				Orientation.HORIZONTAL, 0, 0, SubYacht.UNITS, SubYacht.NAME));
+				Orientation.HORIZONTAL, 0, 0, Destroyer.UNITS, Destroyer.NAME,
+				Destroyer.SHORT_NAME));
+		placedYachts.add(new YachtInfo(YachtType.POSI, Orientation.HORIZONTAL,
+				0, 0, SubYacht.UNITS, SubYacht.NAME, SubYacht.SHORT_NAME));
 		placedYachts.add(new YachtInfo(YachtType.WAR_YAT,
-				Orientation.HORIZONTAL, 0, 0, WarYacht.UNITS, WarYacht.NAME));
-		placedYachts.add(new YachtInfo(YachtType.SKUNK,
-				Orientation.HORIZONTAL, 0, 0, Skunker.UNITS, Skunker.NAME));
-		
+				Orientation.HORIZONTAL, 0, 0, WarYacht.UNITS, WarYacht.NAME,
+				WarYacht.SHORT_NAME));
+		placedYachts.add(new YachtInfo(YachtType.SKUNK, Orientation.HORIZONTAL,
+				0, 0, Skunker.UNITS, Skunker.NAME, Skunker.SHORT_NAME));
+
 		// Yachts
 		unplacedYachts = new Stack<Yacht>();
-		
-		unplacedYachts.push(YachtFactory.createSkunkerYacht(placedYachts.get(4)));
+
+		unplacedYachts
+				.push(YachtFactory.createSkunkerYacht(placedYachts.get(4)));
 		unplacedYachts.push(YachtFactory.createSubYacht(placedYachts.get(2)));
 		unplacedYachts.push(YachtFactory.createWarYacht(placedYachts.get(3)));
-		unplacedYachts.push(YachtFactory.createDestroyerYacht(placedYachts.get(1)));
-		unplacedYachts.push(YachtFactory.createCarrierYacht(placedYachts.get(0)));
+		unplacedYachts.push(YachtFactory.createDestroyerYacht(placedYachts
+				.get(1)));
+		unplacedYachts
+				.push(YachtFactory.createCarrierYacht(placedYachts.get(0)));
 
 
-		
 		displayedYacht = unplacedYachts.pop();
 
 		// Boxes
@@ -122,7 +127,7 @@ public class PlacementMenu implements IOnSceneTouchListener
 
 		resetYachtPosition();
 	}
-	
+
 	public ArrayList<YachtInfo> getPlacedYachts()
 	{
 		return placedYachts;
@@ -147,36 +152,36 @@ public class PlacementMenu implements IOnSceneTouchListener
 		scene = scn;
 		scene.registerTouchArea(readyButton);
 	}
-	
+
 	public void setReadyButtonEnabled(boolean enabled)
 	{
 		readyButton.setEnabled(enabled);
 	}
-	
+
 	public void onSuccess()
 	{
 		displayedYacht = null;
-		
-		if(yachtDescription != null)
+
+		if (yachtDescription != null)
 		{
-			if(yachtDescription.hasParent())
+			if (yachtDescription.hasParent())
 				yachtDescription.detachSelf();
 			yachtDescription = null;
 		}
-		
-		if(boundingBox != null)
+
+		if (boundingBox != null)
 		{
 			layer.detachChild(boundingBox);
 			boundingBox = null;
 		}
-		
-		if(displayBox != null)
+
+		if (displayBox != null)
 		{
 			layer.detachChild(displayBox);
 			displayBox = null;
 		}
-		
-		if(readyButton != null)	
+
+		if (readyButton != null)
 		{
 			readyButton.detachSelf();
 			scene.unregisterTouchArea(readyButton);
@@ -187,7 +192,7 @@ public class PlacementMenu implements IOnSceneTouchListener
 	private void resetYachtPosition()
 	{
 
-		
+
 		switch (displayedYacht.getOrientation())
 		{
 		case VERTICAL:
@@ -210,9 +215,9 @@ public class PlacementMenu implements IOnSceneTouchListener
 	{
 		int r = Battlefield.getCellFromPosition(pY);
 		int c = Battlefield.getCellFromPosition(pX);
-		
+
 		displayedYacht.setRow(r);
-		displayedYacht.setColumn(c);		
+		displayedYacht.setColumn(c);
 	}
 
 
@@ -220,13 +225,13 @@ public class PlacementMenu implements IOnSceneTouchListener
 	{
 		layer.detachChild(displayedYacht.getSprite());
 		userBattlefield.addYacht(displayedYacht);
-		
+
 		int r = Battlefield.getCellFromPosition(pY);
 		int c = Battlefield.getCellFromPosition(pX);
-		
+
 		YachtType yt = displayedYacht.getType();
-		
-		switch(yt)
+
+		switch (yt)
 		{
 		case HEL_CAR:
 			placedYachts.get(0).col = c;
@@ -253,11 +258,10 @@ public class PlacementMenu implements IOnSceneTouchListener
 			placedYachts.get(4).row = r;
 			placedYachts.get(4).orientation = displayedYacht.getOrientation();
 			break;
-		
+
 		}
-		
-		
-		
+
+
 		if (!unplacedYachts.isEmpty())
 		{
 			displayedYacht = unplacedYachts.pop();

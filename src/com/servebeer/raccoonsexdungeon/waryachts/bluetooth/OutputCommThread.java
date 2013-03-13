@@ -4,12 +4,9 @@ package com.servebeer.raccoonsexdungeon.waryachts.bluetooth;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.andengine.ui.activity.BaseGameActivity;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.widget.Toast;
 
 import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
@@ -21,17 +18,18 @@ public class OutputCommThread extends Thread
 	private final BluetoothAdapter btAdapter;
 	private final ControlMessage outMsg;
 	private BluetoothSocket outputSocket;
-	private BaseGameActivity activity;
+	private boolean invalid;
 
-	public OutputCommThread(BaseGameActivity bga, BluetoothDevice device,
-			ControlMessage msg, BluetoothAdapter adapter)
+	public OutputCommThread(BluetoothDevice device, ControlMessage msg,
+			BluetoothAdapter adapter)
 	{
+		setDaemon(true);
 		// Use a temporary object that is later assigned to mmSocket,
 		// because mmSocket is final
 		BluetoothSocket tmp = null;
-		activity = bga;
 		btDevice = device;
 		btAdapter = adapter;
+		invalid = false;
 
 		// Get a BluetoothSocket to connect with the given BluetoothDevice
 		try
@@ -41,7 +39,9 @@ public class OutputCommThread extends Thread
 					.createRfcommSocketToServiceRecord(ConnectionHandler.uuid);
 		}
 		catch (IOException e)
-		{}
+		{
+			invalid = true;
+		}
 		outputSocket = tmp;
 
 		outMsg = msg;
@@ -51,6 +51,13 @@ public class OutputCommThread extends Thread
 	{
 		// Cancel discovery because it will slow down the connection
 		btAdapter.cancelDiscovery();
+
+		if (invalid)
+		{
+			// WarYachtsActivity.getConnectionHandler().listen();
+			Thread.currentThread().interrupt();
+			return;
+		}
 
 		try
 		{
@@ -64,25 +71,18 @@ public class OutputCommThread extends Thread
 			try
 			{
 				outputSocket.close();
+				outputSocket = null;
 			}
 			catch (IOException closeException)
-			{}
-
-			activity.runOnUiThread(new Runnable()
 			{
-				@Override
-				public void run()
-				{
-					Toast.makeText(activity,
-							"Could not connect to opponent. Try again later",
-							Toast.LENGTH_SHORT).show();
-				}
-			});
+				outputSocket = null;
+			}
 
-			WarYachtsActivity.getConnectionHandler().listen();
+			// WarYachtsActivity.getConnectionHandler().listen();
 
 			outMsg.onFail();
-			
+
+			Thread.currentThread().interrupt();
 			return;
 		}
 
@@ -90,40 +90,59 @@ public class OutputCommThread extends Thread
 		// Don't queue up acks
 		if (outMsg.getType() != ControlType.ACK)
 			WarYachtsActivity.getConnectionHandler().queueMessage(outMsg);
-		else
-			activity.runOnUiThread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					Toast.makeText(activity,
-							"Sending ack!:(" + outMsg.getMessage() + ")",
-							Toast.LENGTH_SHORT).show();
-				}
-			});
 
 		// write to socket
+		DataOutputStream outStream;
 		try
 		{
-			DataOutputStream outStream = new DataOutputStream(
-					outputSocket.getOutputStream());
-
-			outStream.write(outMsg.getMessage().getBytes());
-
-			outStream.flush();
-
-			outStream.close();
-
-			outputSocket.close();
+			outStream = new DataOutputStream(outputSocket.getOutputStream());
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+			outStream = null;
 			e.printStackTrace();
+			// WarYachtsActivity.getConnectionHandler().listen();
+			Thread.currentThread().interrupt();
+			return;
 		}
 
-		WarYachtsActivity.getConnectionHandler().listen();
+		try
+		{
+			outStream.write(outMsg.getMessage().getBytes());
 
+			outStream.flush();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				outStream.close();
+				outStream = null;
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				outStream = null;
+			}
+
+			try
+			{
+				outputSocket.close();
+				outputSocket = null;
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				outputSocket = null;
+			}
+		}
+
+		// WarYachtsActivity.getConnectionHandler().listen();
+		Thread.currentThread().interrupt();
 		return;
 	}
 
@@ -135,8 +154,9 @@ public class OutputCommThread extends Thread
 			outputSocket.close();
 		}
 		catch (IOException e)
-		{}
-		WarYachtsActivity.getConnectionHandler().listen();
+		{
+			outputSocket = null;
+		}
 	}
 
 }

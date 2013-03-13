@@ -11,8 +11,8 @@ import org.andengine.util.color.Color;
 
 public class ButtonFactory extends ContentFactory
 {
-	protected static final int NUM_MENU_BUTTONS = 5;
-	
+	protected static final int NUM_MENU_DIVISIONS = 6;
+
 	protected static final float MENU_BUTTON_HEIGHT = 100.0f * SIZE_RATIO;
 
 
@@ -68,6 +68,35 @@ public class ButtonFactory extends ContentFactory
 		return readyButton;
 	}
 
+	public static ButtonSprite createFireButton(OnClickListener listener)
+	{
+		// Create a basic button
+		ButtonSprite readyButton = createButton(listener);
+
+		// Create button text
+		Text readyText = TextFactory.createSimpleText("Fire!");
+
+		// Scale it like a fire button (vertically)
+		readyButton.setScaleCenter(0, 0);
+		readyButton.setScaleY((readyText.getHeight() + 40.0f)
+				/ readyButton.getHeightScaled());
+
+		// Scale text
+		centerTextOnButton(readyText, readyButton);
+		readyText.setColor(Color.BLACK);
+
+		// Set button on bottom of screen
+		readyButton.setY(cameraHeight - readyButton.getHeightScaled());
+
+		// Center the button on the screen horizontally
+		readyButton.setX(cameraWidth / 2.0f - readyButton.getWidthScaled()
+				/ 2.0f);
+
+		// Attach text and return button
+		readyButton.attachChild(readyText);
+		return readyButton;
+	}
+
 	public static ButtonSprite createMenuButton(String name, int divNo,
 			OnClickListener listener)
 	{
@@ -85,7 +114,7 @@ public class ButtonFactory extends ContentFactory
 
 		// Set button to height according to which division of the screen it
 		// should be in
-		menuButton.setY(divNo * (float) cameraHeight / NUM_MENU_BUTTONS
+		menuButton.setY(divNo * (float) cameraHeight / NUM_MENU_DIVISIONS
 				- menuButton.getHeightScaled() / 2.0f);
 
 		// Center the button on the screen horizontally

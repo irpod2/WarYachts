@@ -8,6 +8,7 @@ import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Battlefield;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.Shot.ShotType;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.YachtType;
 
 
 public class GameState implements Serializable
@@ -18,7 +19,7 @@ public class GameState implements Serializable
 	 */
 	private static final long serialVersionUID = 6776457514302791105L;
 
-
+	protected boolean[] sunkShips;
 	protected Boolean myTurn;
 	protected String oppMac;
 
@@ -36,9 +37,11 @@ public class GameState implements Serializable
 
 		myYachts = new ArrayList<YachtInfo>();
 		oppYachts = new ArrayList<YachtInfo>();
-		
+
 		myShots = new ShotType[Battlefield.GRID_SIZE][Battlefield.GRID_SIZE];
 		oppShots = new ShotType[Battlefield.GRID_SIZE][Battlefield.GRID_SIZE];
+
+		sunkShips = new boolean[] { false, false, false, false, false };
 
 		for (int row = 0; row < Battlefield.GRID_SIZE; row++)
 		{
@@ -48,22 +51,27 @@ public class GameState implements Serializable
 				oppShots[row][col] = ShotType.NONE;
 			}
 		}
-		
-		
+
+
 	}
 
-	
+
 	// Mutators
 	public void updateTurn(boolean turn)
 	{
 		myTurn = turn;
 	}
-	
+
+	public void updateSunkShips(YachtType t)
+	{
+		sunkShips[t.ordinal()] = true;
+	}
+
 	public void updateMac(String mac)
 	{
 		oppMac = mac;
 	}
-	
+
 	public void updateMyYachts(ArrayList<YachtInfo> y)
 	{
 		myYachts = y;
@@ -84,33 +92,43 @@ public class GameState implements Serializable
 	{
 		oppShots[row][col] = type;
 	}
-	
-	//Accessors
+
+	// Accessors
 	public Boolean getMyTurn()
 	{
 		return myTurn;
 	}
-	
+
+	public boolean isVictory()
+	{
+		for (boolean b : sunkShips)
+		{
+			if (!b)
+				return false;
+		}
+		return true;
+	}
+
 	public String getOppMac()
 	{
 		return oppMac;
 	}
-	
+
 	public ArrayList<YachtInfo> getMyYachts()
 	{
 		return myYachts;
 	}
-	
+
 	public ArrayList<YachtInfo> getOppYachts()
 	{
 		return oppYachts;
 	}
-	
+
 	public ShotType[][] getMyShots()
 	{
 		return myShots;
 	}
-	
+
 	public ShotType[][] getOppShots()
 	{
 		return oppShots;

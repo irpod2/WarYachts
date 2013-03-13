@@ -50,8 +50,8 @@ public class ConnectionHandler
 	private Callback<ControlMessage> messageHandlerCallback;
 	private CallbackVoid foundGameCallback;
 
-	private InputCommThread inThread;
-	private OutputCommThread outThread;
+	private ArrayList<InputCommThread> inThreads;
+	private ArrayList<OutputCommThread> outThreads;
 	private ArrayList<MessagePair> unackedMessages;
 
 
@@ -63,6 +63,8 @@ public class ConnectionHandler
 		messageHandlerCallback = msgHandlerCB;
 		foundGameCallback = foundGameCB;
 		unackedMessages = new ArrayList<MessagePair>();
+		inThreads = new ArrayList<InputCommThread>();
+		outThreads = new ArrayList<OutputCommThread>();
 	}
 
 	public BusyType getBusyType()
@@ -182,8 +184,6 @@ public class ConnectionHandler
 							.substring(deviceArray[which].lastIndexOf("\n") + 1);
 					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
 					opponentDevice = dev;
-					Toast.makeText(activity, "Device is set",
-							Toast.LENGTH_SHORT).show();
 					foundGameCallback.onCallback();
 				}
 			});
@@ -282,8 +282,6 @@ public class ConnectionHandler
 							.substring(deviceArray[which].lastIndexOf("\n") + 1);
 					BluetoothDevice dev = btAdapter.getRemoteDevice(mac);
 					opponentDevice = dev;
-					Toast.makeText(activity, "Device is set",
-							Toast.LENGTH_SHORT).show();
 					foundGameCallback.onCallback();
 				}
 			});
@@ -309,6 +307,56 @@ public class ConnectionHandler
 			opponentDevice = dev;
 	}
 
+	// MUST BE RUN ON UPDATE THREAD: ONLY SHOULD BE CALLED FROM
+	// unqueueMessage()
+	protected void cleanThreads()
+	{
+		ArrayList<InputCommThread> oldInThreads = inThreads;
+		inThreads = new ArrayList<InputCommThread>();
+		for (InputCommThread in : oldInThreads)
+		{
+			try
+			{
+				if (!in.isAlive())
+				{
+					in.join(0);
+				}
+				else
+				{
+					inThreads.add(in);
+				}
+			}
+			catch (InterruptedException e)
+			{
+				// doubt we'll ever get here since the timer is for 0 ms...
+				e.printStackTrace();
+			}
+		}
+		oldInThreads.clear();
+		ArrayList<OutputCommThread> oldOutThreads = outThreads;
+		outThreads = new ArrayList<OutputCommThread>();
+		for (OutputCommThread out : oldOutThreads)
+		{
+			try
+			{
+				if (!out.isAlive())
+				{
+					out.join(0);
+				}
+				else
+				{
+					outThreads.add(out);
+				}
+			}
+			catch (InterruptedException e)
+			{
+				// doubt we'll ever get here since the timer is for 0 ms...
+				e.printStackTrace();
+			}
+		}
+		oldOutThreads.clear();
+	}
+
 	public void listen()
 	{
 		busy = BusyType.HOSTING;
@@ -319,21 +367,36 @@ public class ConnectionHandler
 			public void run()
 			{
 				// Create Input Comm Thread
-				inThread = new InputCommThread(messageHandlerCallback);
-				inThread.start();
+				InputCommThread nextThread = new InputCommThread(
+						messageHandlerCallback);
+				inThreads.add(nextThread);
+				nextThread.start();
 
 				// Notify Current Scenario that it can use the network
 				messageHandlerCallback.onCallback(null);
+
+				cleanThreads();
 			}
 		});
 	}
 
-	public void sendMsg(ControlMessage ctrlMsg)
+	public void sendMsg(final ControlMessage ctrlMsg)
 	{
-		busy = BusyType.CONNECTING;
-		outThread = new OutputCommThread(activity, opponentDevice, ctrlMsg,
-				btAdapter);
-		outThread.start();
+		if (activity != null)
+		{
+			activity.runOnUpdateThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					busy = BusyType.CONNECTING;
+					OutputCommThread nextThread = new OutputCommThread(
+							opponentDevice, ctrlMsg, btAdapter);
+					outThreads.add(nextThread);
+					nextThread.start();
+				}
+			});
+		}
 	}
 
 	// Called when message sending fails due to inability to connect
@@ -341,16 +404,19 @@ public class ConnectionHandler
 	{
 		// Always run on update thread to prevent concurrency problems
 		// (thread-safe)
-		activity.runOnUpdateThread(new Runnable()
+		if (activity != null)
 		{
-			@Override
-			public void run()
+			activity.runOnUpdateThread(new Runnable()
 			{
-				MessageTimer t = new MessageTimer(activity, ctrlMsg);
-				unackedMessages.add(new MessagePair(ctrlMsg, t));
-				activity.getEngine().registerUpdateHandler(t);
-			}
-		});
+				@Override
+				public void run()
+				{
+					MessageTimer t = new MessageTimer(activity, ctrlMsg);
+					unackedMessages.add(new MessagePair(ctrlMsg, t));
+					activity.getEngine().registerUpdateHandler(t);
+				}
+			});
+		}
 	}
 
 	public void unqueueMessage(final ControlMessage ctrlMsg,
@@ -358,57 +424,46 @@ public class ConnectionHandler
 	{
 		// Always run on update thread to prevent concurrency problems
 		// (thread-safe)
-		activity.runOnUpdateThread(new Runnable()
+		if (activity != null)
 		{
-			@Override
-			public void run()
+			activity.runOnUpdateThread(new Runnable()
 			{
-
-				final String targetString;
-				if (ctrlMsg.getType() == ControlType.DESTROYED)
-					targetString = ctrlMsg.getMessage().substring(2, 6);
-				else if (sanitize)
-					targetString = ctrlMsg.getSanitizedMessage();
-				else
-					targetString = ctrlMsg.getMessage();
-
-				for (MessagePair msgPair : unackedMessages)
+				@Override
+				public void run()
 				{
-					// If message is found to be unacked
-					if (targetString.equals(msgPair.message.getMessage()))
-					{
-						// Cancel the timer for the entry
-						msgPair.timer.cancel();
-						// Remove the entry from the list
-						unackedMessages.remove(msgPair);
+					// Perform Unqueueing
+					final String targetString;
+					if (ctrlMsg.getType() == ControlType.DESTROYED)
+						targetString = ctrlMsg.getMessage().substring(2, 6);
+					else if (sanitize)
+						targetString = ctrlMsg.getSanitizedMessage();
+					else
+						targetString = ctrlMsg.getMessage();
 
-						activity.runOnUiThread(new Runnable()
+					for (MessagePair msgPair : unackedMessages)
+					{
+						// If message is found to be unacked
+						if (targetString.equals(msgPair.message.getMessage()))
 						{
-							@Override
-							public void run()
-							{
-								Toast.makeText(activity,
-										"Unqueueing:(" + targetString + ")",
-										Toast.LENGTH_SHORT).show();
-							}
-						});
-						// Stop processing (since we just screwed up the
-						// iterator by removing an entry)
-						return;
+							// Cancel the timer for the entry
+							msgPair.timer.cancel();
+							// Remove the entry from the list
+							unackedMessages.remove(msgPair);
+
+							// Stop processing (since we just screwed up the
+							// iterator by removing an entry)
+							// Done unqueueing message, time to clean up
+							cleanThreads();
+							return;
+						}
 					}
 				}
-				activity.runOnUiThread(new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						Toast.makeText(activity,
-								"Did not find:(" + targetString + ")",
-								Toast.LENGTH_SHORT).show();
-					}
-				});
-			}
-		});
+			});
+		}
+		else
+		{
+			unackedMessages.clear();
+		}
 	}
 
 	public void unqueueMessages()
@@ -420,6 +475,10 @@ public class ConnectionHandler
 			@Override
 			public void run()
 			{
+				for (MessagePair mp : unackedMessages)
+				{
+					mp.timer.cancel();
+				}
 				unackedMessages.clear();
 			}
 		});
@@ -450,24 +509,19 @@ public class ConnectionHandler
 			}
 			break;
 
-		// If connecting,
-		case HOSTING:
-			if (inThread != null)
-			{
-				inThread.kill();
-				inThread = null;
-			}
-			break;
-
-		// If Hosting, kill host thread mercilessly
+		// If connecting or
+		// If Hosting, kill threads mercilessly
 		case CONNECTING:
-			if (outThread != null)
+		case HOSTING:
+			activity.runOnUpdateThread(new Runnable()
 			{
-				outThread.kill();
-				outThread = null;
-			}
+				@Override
+				public void run()
+				{
+					cleanThreads();
+				}
+			});
 			break;
-
 		}
 
 		unqueueMessages();
@@ -475,5 +529,4 @@ public class ConnectionHandler
 		// Ensure the busy type is NOT_BUSY
 		busy = BusyType.NOT_BUSY;
 	}
-
 }

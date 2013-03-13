@@ -9,8 +9,10 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
+import org.andengine.entity.text.Text;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.ui.activity.BaseGameActivity;
+import org.andengine.util.color.Color;
 
 import android.bluetooth.BluetoothDevice;
 import android.widget.Toast;
@@ -19,8 +21,14 @@ import com.servebeer.raccoonsexdungeon.waryachts.WarYachtsActivity;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.EnemyBattlefield;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.PlacementMenu;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.UserBattlefield;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Carrier;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Destroyer;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Skunker;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.SubYacht;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.WarYacht;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.Yacht;
 import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo;
+import com.servebeer.raccoonsexdungeon.waryachts.battlefields.yachts.YachtInfo.YachtType;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.gamestate.GameState;
@@ -29,6 +37,7 @@ import com.servebeer.raccoonsexdungeon.waryachts.handlers.BattlefieldSwipeHandle
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.BackgroundFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.ButtonFactory;
+import com.servebeer.raccoonsexdungeon.waryachts.utils.content.TextFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.YachtFactory;
 
 public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
@@ -40,6 +49,8 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	protected Scene scene;
 	protected ArrayList<Entity> layers;
 	protected CallbackVoid onBackCallback;
+	protected CallbackVoid onVictoryCallback;
+	protected CallbackVoid onDefeatCallback;
 	protected ButtonSprite fireButton;
 	protected boolean ready;
 	protected boolean hosting;
@@ -49,20 +60,23 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 	protected BattlefieldSwipeHandler swipeHandler;
 	protected PlacementMenu placementMenu;
 	protected GameState gameState;
+	protected Text selectedText;
+	protected Text selectedTextBG;
 	private float prevX;
 
-
 	public GameInstanceScenario(BaseGameActivity bga, Scene scn,
-			CallbackVoid onBackCB, ConnectionHandler conHandler, boolean host,
-			boolean loading)
+			CallbackVoid onBackCB, CallbackVoid onVictoryCB,
+			CallbackVoid onDefeatCB, ConnectionHandler conHandler,
+			boolean host, boolean loading)
 	{
 		activity = bga;
 		scene = scn;
 		onBackCallback = onBackCB;
+		onVictoryCallback = onVictoryCB;
+		onDefeatCallback = onDefeatCB;
 		ready = false;
 		hosting = host;
 		btHandler = conHandler;
-
 		if (loading)
 		{
 			gameState = SaveService.getInstance(activity).load();
@@ -87,8 +101,8 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 			}
 			else
 			{
-				BluetoothDevice dev = btHandler.getAdapter().getRemoteDevice(
-						gameState.getOppMac());
+				final BluetoothDevice dev = btHandler.getAdapter()
+						.getRemoteDevice(gameState.getOppMac());
 				btHandler.setDevice(dev);
 				// Loaded games don't need to place: initialized to ready
 				ready = true;
@@ -101,10 +115,8 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 					@Override
 					public void run()
 					{
-						Toast.makeText(
-								activity,
-								"Set bluetooth device to one with MAC "
-										+ gameState.getOppMac(),
+						Toast.makeText(activity,
+								"Resuming game with " + dev.getName(),
 								Toast.LENGTH_SHORT).show();
 					}
 				});
@@ -126,16 +138,25 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 		scene.attachChild(layers.get(ENEMY_FIELD));
 
 		userBattlefield = new UserBattlefield(gameState);
-		enemyBattlefield = new EnemyBattlefield(gameState);
+		enemyBattlefield = new EnemyBattlefield(gameState, this);
 
-		fireButton = ButtonFactory.createButton(new OnClickListener()
+		// Text indicating location of targeter
+		selectedTextBG = TextFactory.createSimpleText("");
+		selectedText = TextFactory.createText(-2.0f, -2.0f, "", 1.0f);
+		selectedTextBG.attachChild(selectedText);
+		selectedTextBG.setColor(Color.BLACK);
+		selectedText.setColor(Color.WHITE);
+
+		fireButton = ButtonFactory.createFireButton(new OnClickListener()
 		{
 			@Override
 			public void onClick(ButtonSprite pButtonSprite,
 					float pTouchAreaLocalX, float pTouchAreaLocalY)
 			{
-				if (gameState.getMyTurn())
+				if (gameState.getMyTurn() && enemyBattlefield.isTargeterSet())
 				{
+					gameState.updateTurn(false);
+					fireButton.setEnabled(false);
 					ControlMessage msg = ControlMessage.createShootMessage(
 							enemyBattlefield.getSelectedRow(),
 							enemyBattlefield.getSelectedCol(),
@@ -146,10 +167,20 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 								{
 									gameState.updateTurn(true);
 									fireButton.setEnabled(true);
+
+									activity.runOnUiThread(new Runnable()
+									{
+										@Override
+										public void run()
+										{
+											Toast.makeText(
+													activity,
+													"Could not connect to opponent. Try again later",
+													Toast.LENGTH_SHORT).show();
+										}
+									});
 								}
 							});
-					gameState.updateTurn(false);
-					fireButton.setEnabled(false);
 					btHandler.sendMsg(msg);
 				}
 			}
@@ -176,6 +207,26 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 		scene.setBackground(bg);
 	}
 
+	public void setTargeter(int row, int col)
+	{
+		String text = "Selected: " + (char) (col + 'A')
+				+ String.valueOf(row + 1);
+		selectedText.setText(text);
+		selectedTextBG.setText(text);
+		selectedTextBG.setX(WarYachtsActivity.getCameraWidth() / 2.0f
+				- selectedTextBG.getWidth() / 2.0f);
+		selectedTextBG.setY(fireButton.getY() - selectedTextBG.getHeight()
+				- 5.0f);
+		if (!selectedTextBG.hasParent())
+			layers.get(ENEMY_FIELD).attachChild(selectedTextBG);
+	}
+
+	public void unsetTargeter()
+	{
+		if (selectedTextBG.hasParent())
+			layers.get(ENEMY_FIELD).detachChild(selectedTextBG);
+	}
+
 	public boolean isReady()
 	{
 		return ready;
@@ -198,6 +249,7 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 		// War Battlefield
 		layers.get(ENEMY_FIELD).attachChild(fireButton);
 		layers.get(ENEMY_FIELD).attachChild(enemyBattlefield.getSprite());
+		layers.get(ENEMY_FIELD).attachChild(selectedTextBG);
 
 		// Chat (no chat stuff now)
 	}
@@ -248,15 +300,8 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 			{
 				gameState.updateMac(btHandler.getOppMac());
 				placementMenu.setReadyButtonEnabled(false);
-				activity.runOnUpdateThread(new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						btHandler.sendMsg(ControlMessage
-								.createReadyMessage(enableReadyButtonCallback));
-					}
-				});
+				btHandler.sendMsg(ControlMessage
+						.createReadyMessage(enableReadyButtonCallback));
 			}
 			else
 			{
@@ -271,6 +316,17 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 		public void onCallback()
 		{
 			placementMenu.setReadyButtonEnabled(true);
+
+			activity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(activity,
+							"Could not connect to opponent. Try again later",
+							Toast.LENGTH_SHORT).show();
+				}
+			});
 		}
 	};
 
@@ -328,6 +384,16 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 				respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
 				btHandler.sendMsg(respMsg);
 				fireButton.setEnabled(gameState.getMyTurn());
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						Toast.makeText(activity,
+								"The enemy is ready! Fire at will!",
+								Toast.LENGTH_SHORT).show();
+					}
+				});
 			}
 			else
 			{
@@ -367,27 +433,33 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 				@Override
 				public void run()
 				{
+					gameState.updateSunkShips(y.getInfo().yachtType);
 					enemyBattlefield.addYacht(y);
 					gameState.addOppYacht(y.getInfo());
 
 					// VICTORY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-					if (enemyBattlefield.defeatedAllEnemies())
+					if (gameState.isVictory())
 					{
-						activity.runOnUiThread(new Runnable()
-						{
-							@Override
-							public void run()
-							{
-								Toast.makeText(activity, "YOU WIN!",
-										Toast.LENGTH_LONG).show();
-							}
-						});
-						handleBackPress();
+						onVictoryCallback.onCallback();
 					}
 					else
 					{
 						SaveService.getInstance(activity).save(gameState);
 					}
+				}
+			});
+			activity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if (y.getType() == YachtType.OLD_REL)
+						Toast.makeText(activity, "You sunk Old Reliable!",
+								Toast.LENGTH_SHORT).show();
+					else
+						Toast.makeText(activity,
+								"You sunk their " + y.getShortName() + "!",
+								Toast.LENGTH_SHORT).show();
 				}
 			});
 			break;
@@ -398,6 +470,14 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
 			btHandler.sendMsg(respMsg);
 			SaveService.getInstance(activity).save(gameState);
+			activity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(activity, "Hit!", Toast.LENGTH_SHORT).show();
+				}
+			});
 			break;
 		case MISS:
 			gameState.updateTurn(false);
@@ -406,34 +486,49 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 			respMsg = ControlMessage.createAckMessage(ctrlMsg.getMessage());
 			btHandler.sendMsg(respMsg);
 			SaveService.getInstance(activity).save(gameState);
+			activity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(activity, "Miss!", Toast.LENGTH_SHORT)
+							.show();
+				}
+			});
 			break;
 		case SHOOT:
-
 			if (!ready)
 			{
 				ready = true;
 				onShipsPlaced();
 			}
+			
+			int row = ctrlMsg.getRow();
+			int col = ctrlMsg.getCol();
 
 			// If hit, send hit message. Otherwise, send miss message
-			YachtInfo info = userBattlefield.shoot(ctrlMsg.getRow(),
-					ctrlMsg.getCol());
+			YachtInfo info = userBattlefield.shoot(row,
+					col);
 			if (info == null)
 			{
-				respMsg = ControlMessage.createMissMessage(ctrlMsg.getRow(),
-						ctrlMsg.getCol());
+				respMsg = ControlMessage.createMissMessage(row,
+						col);
 			}
 			else
 			{
-				info.numHits--;
+				if (!info.hasBeenHit(row, col))
+				{
+					info.registerHit(row, col);
+					info.numHits--;
+				}
 				if (info.numHits > 0)
-					respMsg = ControlMessage.createHitMessage(ctrlMsg.getRow(),
-							ctrlMsg.getCol());
+					respMsg = ControlMessage.createHitMessage(row,
+							col);
 				else
 				{
 					info.numHits = 0;
 					respMsg = ControlMessage.createDestroyedMessage(
-							ctrlMsg.getRow(), ctrlMsg.getCol(), info);
+							row, col, info);
 				}
 			}
 			btHandler.sendMsg(respMsg);
@@ -446,6 +541,15 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 				gameState.updateTurn(true);
 				fireButton.setEnabled(true);
 				SaveService.getInstance(activity).save(gameState);
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						Toast.makeText(activity, "Enemy Miss!",
+								Toast.LENGTH_SHORT).show();
+					}
+				});
 			}
 			else if (firstChar == 'H')
 			{
@@ -453,6 +557,15 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 				gameState.updateTurn(true);
 				fireButton.setEnabled(true);
 				SaveService.getInstance(activity).save(gameState);
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						Toast.makeText(activity, "Enemy Hit!",
+								Toast.LENGTH_SHORT).show();
+					}
+				});
 			}
 			else if (firstChar == 'D')
 			{
@@ -461,19 +574,46 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 				fireButton.setEnabled(true);
 				if (userBattlefield.isDefeated())
 				{
+					onDefeatCallback.onCallback();
+				}
+				else
+				{
+					String ctrlStr = ctrlMsg.getMessage();
+					int delimiter = ctrlStr.indexOf('|');
+					final YachtType yachtType = YachtType.valueOf(ctrlStr
+							.substring(8, delimiter));
+					SaveService.getInstance(activity).save(gameState);
 					activity.runOnUiThread(new Runnable()
 					{
 						@Override
 						public void run()
 						{
-							Toast.makeText(activity, "YOU LOOOOSEEE!",
-									Toast.LENGTH_LONG).show();
+							String dispStr = "";
+							switch (yachtType)
+							{
+							case HEL_CAR:
+								dispStr = "your " + Carrier.SHORT_NAME;
+								break;
+							case OLD_REL:
+								dispStr = Destroyer.SHORT_NAME;
+								break;
+							case WAR_YAT:
+								dispStr = "your " + WarYacht.SHORT_NAME;
+								break;
+							case POSI:
+								dispStr = "your " + SubYacht.SHORT_NAME;
+								break;
+							case SKUNK:
+								dispStr = "your " + Skunker.SHORT_NAME;
+								break;
+							}
+							Toast.makeText(activity,
+									"They sunk " + dispStr + "!",
+									Toast.LENGTH_SHORT).show();
+
 						}
 					});
-					handleBackPress();
 				}
-				else
-					SaveService.getInstance(activity).save(gameState);
 			}
 			else if (firstChar == 'R')
 			{
@@ -482,23 +622,24 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 					ready = true;
 					onShipsPlaced();
 					gameState.updateTurn(false);
+					activity.runOnUiThread(new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							Toast.makeText(
+									activity,
+									"The Game has begun! Wait for your turn to fire.",
+									Toast.LENGTH_SHORT).show();
+						}
+					});
 				}
 				ready = true;
 			}
-
 			break;
 		default:
 			break;
 		}
-		activity.runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				Toast.makeText(activity, "(" + ctrlMsg.getMessage() + ")",
-						Toast.LENGTH_SHORT).show();
-			}
-		});
 	}
 
 	@Override

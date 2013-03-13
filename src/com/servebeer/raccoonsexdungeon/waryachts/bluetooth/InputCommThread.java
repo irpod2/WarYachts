@@ -27,6 +27,7 @@ public class InputCommThread extends Thread
 
 	public InputCommThread(Callback<ControlMessage> msgHandlerCB)
 	{
+		setDaemon(true);
 		// Use a temporary object that is later assigned to serverSocket,
 		// because serverSocket is final
 		messageHandlerCallback = msgHandlerCB;
@@ -53,6 +54,7 @@ public class InputCommThread extends Thread
 		{
 			// Go back to listening
 			WarYachtsActivity.getConnectionHandler().listen();
+			Thread.currentThread().interrupt();
 			return;
 		}
 		// Keep listening until exception occurs or a socket is returned
@@ -64,7 +66,9 @@ public class InputCommThread extends Thread
 			}
 			catch (IOException e)
 			{
-				// Could not create server socket
+				// Could not create client socket
+				WarYachtsActivity.getConnectionHandler().listen();
+				Thread.currentThread().interrupt();
 				return;
 			}
 			// If a connection was accepted
@@ -81,6 +85,7 @@ public class InputCommThread extends Thread
 				catch (IOException e)
 				{
 					// dunno why this should ever really fail, but ookay
+					serverSocket = null;
 					e.printStackTrace();
 				}
 				break;
@@ -105,8 +110,10 @@ public class InputCommThread extends Thread
 			catch (IOException e1)
 			{
 				// TODO Auto-generated catch block
+				inputSocket = null;
 				e1.printStackTrace();
 			}
+			Thread.currentThread().interrupt();
 			return;
 		}
 
@@ -128,8 +135,10 @@ public class InputCommThread extends Thread
 			catch (IOException e1)
 			{
 				// TODO Auto-generated catch block
+				inputSocket = null;
 				e1.printStackTrace();
 			}
+			Thread.currentThread().interrupt();
 			return;
 		}
 
@@ -143,14 +152,15 @@ public class InputCommThread extends Thread
 		{
 			// Acks serve to prevent timeouts only
 			// Hits and Misses also should be treated as shot acks
-			switch(ctrl.getType())
+			switch (ctrl.getType())
 			{
 			case ACK:
 			case HIT:
 			case MISS:
 			case DESTROYED:
 				// Handle timeout AND let scenario handle message
-				WarYachtsActivity.getConnectionHandler().unqueueMessage(ctrl, true);
+				WarYachtsActivity.getConnectionHandler().unqueueMessage(ctrl,
+						true);
 			default:
 				// Everything else is JUST handled by scenario
 				messageHandlerCallback.onCallback(ctrl);
@@ -161,18 +171,28 @@ public class InputCommThread extends Thread
 		try
 		{
 			inStream.close();
+			inStream = null;
+		}
+		catch (IOException e)
+		{
+			inStream = null;
+			e.printStackTrace();
+		}
+
+		try
+		{
 			inputSocket.close();
 			inputSocket = null;
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+			inputSocket = null;
 			e.printStackTrace();
 		}
 
 		// Go back to listening
 		WarYachtsActivity.getConnectionHandler().listen();
-
+		Thread.currentThread().interrupt();
 		return;
 	}
 
