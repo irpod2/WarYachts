@@ -3,6 +3,7 @@ package com.servebeer.raccoonsexdungeon.waryachts.scenario;
 
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.util.color.Color;
 
@@ -11,6 +12,7 @@ import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.ConnectionHandler;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage;
 import com.servebeer.raccoonsexdungeon.waryachts.bluetooth.controlmessages.ControlMessage.ControlType;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.CallbackVoid;
+import com.servebeer.raccoonsexdungeon.waryachts.utils.content.SpriteFactory;
 import com.servebeer.raccoonsexdungeon.waryachts.utils.content.TextFactory;
 
 public class DefeatScenario implements IScenario
@@ -18,6 +20,7 @@ public class DefeatScenario implements IScenario
 	private final String DEFEAT_MESSAGE_LINE1 = "You Lose!";
 	private final String DEFEAT_MESSAGE_LINE2 = "I AM";
 	private final String DEFEAT_MESSAGE_LINE3 = "SO SORRY!";
+	private final String DEFEAT_MESSAGE_LINE4 = "Have a cookie";
 
 	private Scene scene;
 	private Text defeatTextLine1;
@@ -26,6 +29,9 @@ public class DefeatScenario implements IScenario
 	private Text defeatTextBackgroundLine2;
 	private Text defeatTextLine3;
 	private Text defeatTextBackgroundLine3;
+	private Text defeatTextLine4;
+	private Text defeatTextBackgroundLine4;
+	private Sprite cookieSprite;
 	private CallbackVoid onBackPressCallback;
 	private ConnectionHandler btHandler;
 
@@ -49,7 +55,7 @@ public class DefeatScenario implements IScenario
 				WarYachtsActivity.getCameraWidth() / 2.0f
 						- defeatTextBackgroundLine1.getWidth() / 2.0f,
 				WarYachtsActivity.getCameraHeight() / 2.0f
-						- defeatTextBackgroundLine1.getHeight() * 2.0f);
+						- defeatTextBackgroundLine1.getHeight() * 3.0f);
 
 		// Line 2
 		defeatTextLine2 = TextFactory.createText(-2.0f, -2.0f,
@@ -63,7 +69,7 @@ public class DefeatScenario implements IScenario
 				WarYachtsActivity.getCameraWidth() / 2.0f
 						- defeatTextBackgroundLine2.getWidth() / 2.0f,
 				WarYachtsActivity.getCameraHeight() / 2.0f
-						- defeatTextBackgroundLine2.getHeight() * 0.5f);
+						- defeatTextBackgroundLine2.getHeight() * 1.5f);
 
 		// Line 3
 		defeatTextLine3 = TextFactory.createText(-2.0f, -2.0f,
@@ -76,8 +82,27 @@ public class DefeatScenario implements IScenario
 		defeatTextBackgroundLine3.setPosition(
 				WarYachtsActivity.getCameraWidth() / 2.0f
 						- defeatTextBackgroundLine3.getWidth() / 2.0f,
+				WarYachtsActivity.getCameraHeight() / 2.0f);
+
+		// Line 4
+		defeatTextLine4 = TextFactory.createText(-2.0f, -2.0f,
+				DEFEAT_MESSAGE_LINE4, 1.0f);
+		defeatTextLine4.setColor(Color.WHITE);
+		defeatTextBackgroundLine4 = TextFactory
+				.createSimpleText(DEFEAT_MESSAGE_LINE4);
+		defeatTextBackgroundLine4.setColor(Color.BLACK);
+		defeatTextBackgroundLine4.attachChild(defeatTextLine4);
+		defeatTextBackgroundLine4.setPosition(
+				WarYachtsActivity.getCameraWidth() / 2.0f
+						- defeatTextBackgroundLine4.getWidth() / 2.0f,
 				WarYachtsActivity.getCameraHeight() / 2.0f
-						+ defeatTextBackgroundLine3.getHeight());
+						+ defeatTextBackgroundLine4.getHeight() * 1.5f);
+		
+		// Cookie
+		cookieSprite = SpriteFactory.createCookie(
+				defeatTextBackgroundLine4.getY()
+						+ defeatTextBackgroundLine4.getHeightScaled() * 1.5f,
+				defeatTextBackgroundLine3.getWidthScaled());
 	}
 
 	@Override
@@ -86,6 +111,8 @@ public class DefeatScenario implements IScenario
 		scene.attachChild(defeatTextBackgroundLine1);
 		scene.attachChild(defeatTextBackgroundLine2);
 		scene.attachChild(defeatTextBackgroundLine3);
+		scene.attachChild(defeatTextBackgroundLine4);
+		scene.attachChild(cookieSprite);
 	}
 
 	@Override
@@ -102,6 +129,8 @@ public class DefeatScenario implements IScenario
 		scene.detachChild(defeatTextBackgroundLine1);
 		scene.detachChild(defeatTextBackgroundLine2);
 		scene.detachChild(defeatTextBackgroundLine3);
+		scene.detachChild(defeatTextBackgroundLine4);
+		scene.detachChild(cookieSprite);
 	}
 
 	@Override

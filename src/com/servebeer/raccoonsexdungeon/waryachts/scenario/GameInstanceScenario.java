@@ -91,8 +91,7 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 					{
 						Toast.makeText(
 								activity,
-								"Could not find saved game. Creating new game as host."
-										+ gameState.getOppMac(),
+								"Could not find saved game. Creating new game as host.",
 								Toast.LENGTH_SHORT).show();
 					}
 				});
@@ -502,17 +501,15 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 				ready = true;
 				onShipsPlaced();
 			}
-			
+
 			int row = ctrlMsg.getRow();
 			int col = ctrlMsg.getCol();
 
 			// If hit, send hit message. Otherwise, send miss message
-			YachtInfo info = userBattlefield.shoot(row,
-					col);
+			YachtInfo info = userBattlefield.shoot(row, col);
 			if (info == null)
 			{
-				respMsg = ControlMessage.createMissMessage(row,
-						col);
+				respMsg = ControlMessage.createMissMessage(row, col);
 			}
 			else
 			{
@@ -522,13 +519,12 @@ public class GameInstanceScenario implements IScenario, IOnSceneTouchListener
 					info.numHits--;
 				}
 				if (info.numHits > 0)
-					respMsg = ControlMessage.createHitMessage(row,
-							col);
+					respMsg = ControlMessage.createHitMessage(row, col);
 				else
 				{
 					info.numHits = 0;
-					respMsg = ControlMessage.createDestroyedMessage(
-							row, col, info);
+					respMsg = ControlMessage.createDestroyedMessage(row, col,
+							info);
 				}
 			}
 			btHandler.sendMsg(respMsg);

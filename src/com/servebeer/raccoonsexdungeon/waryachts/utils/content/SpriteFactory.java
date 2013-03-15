@@ -61,7 +61,7 @@ public class SpriteFactory extends ContentFactory
 				.createFromAsset(selectedAtlas, activity.getAssets(),
 						"sprites/TargetSelectedCircle.png", 0, 0);
 		selectedAtlas.load();
-		
+
 		YachtFactory.loadContent();
 	}
 
@@ -76,7 +76,7 @@ public class SpriteFactory extends ContentFactory
 	{
 		return GRID_PADDING + GRID_CELL_SIZE * index;
 	}
-	
+
 	public static float getCellSpacing()
 	{
 		return GRID_CELL_SIZE;
@@ -114,5 +114,22 @@ public class SpriteFactory extends ContentFactory
 				- SPRITE_PADDING, GRID_CELL_SIZE - SPRITE_PADDING,
 				selectedRegion, activity.getVertexBufferObjectManager());
 		return targeter;
+	}
+
+	public static Sprite createCookie(float pY, float width)
+	{
+		BitmapTextureAtlas cookieAtlas = new BitmapTextureAtlas(
+				activity.getTextureManager(), 128, 64);
+		TextureRegion cookieRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(cookieAtlas, activity.getAssets(),
+						"sprites/cookie.png", 0, 0);
+		cookieAtlas.load();
+		Sprite cookieSprite = new Sprite(0, 0, cookieRegion,
+				activity.getVertexBufferObjectManager());
+		cookieSprite.setScaleCenter(0, 0);
+		cookieSprite.setScale(width / cookieSprite.getWidth());
+		cookieSprite.setPosition(
+				cameraWidth / 2.0f - cookieSprite.getWidthScaled() / 2.0f, pY);
+		return cookieSprite;
 	}
 }
